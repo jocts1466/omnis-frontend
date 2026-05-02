@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OMNIS — Prédictions</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080c12;--s1:#0d1219;--s2:#111820;--s3:#161d28;
+  --border:#1a2332;--border2:#222c3a;
+  --text:#c8d4e8;--text2:#7a8fa8;--text3:#3a4a5c;
+  --mono:'DM Mono',monospace;--sans:'Space Grotesk',sans-serif;
+  --green:#3dd68c;--red:#ff5555;--yellow:#f5a623;--blue:#4a9eff;
+  --purple:#a855f7;--cyan:#06b6d4;
+}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:var(--sans)}
+
+/* LAYOUT */
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* HEADER */
+header{
+  height:48px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:24px;flex-shrink:0;
+  justify-content:space-between;
+}
+.logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:3px;color:var(--text)}
+.nav{display:flex;gap:4px}
+.nav-btn{
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);
+  background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:3px;
+  transition:all .2s;
+}
+.nav-btn:hover{color:var(--text2);background:var(--s2)}
+.nav-btn.active{color:var(--text);background:var(--s2);border:1px solid var(--border)}
+.header-right{display:flex;align-items:center;gap:12px}
+.lang-btn{
+  font-family:var(--mono);font-size:8px;color:var(--text3);background:none;
+  border:1px solid var(--border);border-radius:3px;padding:4px 8px;cursor:pointer;
+}
+.lang-btn.active{color:var(--text2);border-color:var(--border2)}
+#last-update{font-family:var(--mono);font-size:8px;color:var(--text3)}
+
+/* FILTRES */
+#filters{
+  height:40px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:8px;flex-shrink:0;
+}
+.filter-btn{
+  font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text3);
+  background:var(--s2);border:1px solid var(--border);border-radius:3px;
+  padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.filter-btn:hover{color:var(--text2);border-color:var(--border2)}
+.filter-btn.active{background:var(--s3);border-color:var(--blue);color:var(--blue)}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+
+/* MAIN LAYOUT */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* LISTE ACTIFS */
+#list-panel{
+  width:100%;min-width:340px;max-width:420px;
+  display:flex;flex-direction:column;border-right:1px solid var(--border);
+  transition:width .3s ease;overflow:hidden;flex-shrink:0;
+}
+#list-panel.collapsed{width:340px}
+#list-panel.expanded{width:100%}
+
+#list-header{
+  padding:12px 16px 8px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+#list-count{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:2px}
+#list-sort{font-family:var(--mono);font-size:8px;color:var(--text3);background:none;border:none;cursor:pointer}
+
+/* COLONNES LISTE */
+#list-cols{
+  display:grid;
+  grid-template-columns:1fr 80px 60px 60px 50px;
+  padding:6px 16px;background:var(--s1);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.col-label{font-family:var(--mono);font-size:7px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+
+/* LIGNES ACTIFS */
+#list-body{overflow-y:auto;flex:1}
+#list-body::-webkit-scrollbar{width:3px}
+#list-body::-webkit-scrollbar-track{background:var(--s1)}
+#list-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.asset-row{
+  display:grid;
+  grid-template-columns:1fr 80px 60px 60px 50px;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .15s;align-items:center;
+}
+.asset-row:hover{background:var(--s2)}
+.asset-row.selected{background:var(--s3);border-left:2px solid var(--blue)}
+
+.asset-name{
+  display:flex;flex-direction:column;gap:2px;
+}
+.asset-symbol{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text)}
+.asset-type{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+
+.dir-badge{
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  padding:3px 8px;border-radius:3px;text-align:center;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.dir-badge.haussier{color:var(--green);background:#3dd68c15;border:1px solid #3dd68c30}
+.dir-badge.baissier{color:var(--red);background:#ff555515;border:1px solid #ff555530}
+.dir-badge.neutre{color:var(--text3);background:var(--s2);border:1px solid var(--border)}
+
+.prob-cell{font-family:var(--mono);font-size:11px;text-align:center}
+.force-bar{height:4px;background:var(--s2);border-radius:2px;width:100%;overflow:hidden}
+.force-fill{height:100%;border-radius:2px;transition:width .3s}
+.delay-cell{font-family:var(--mono);font-size:9px;color:var(--text2);text-align:center}
+
+/* PANEL DÉTAIL */
+#detail-panel{
+  flex:1;display:none;flex-direction:column;overflow:hidden;
+}
+#detail-panel.visible{display:flex}
+
+#detail-header{
+  padding:16px 20px 12px;background:var(--s1);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+#detail-title{
+  font-family:var(--sans);font-size:18px;font-weight:600;color:var(--text);
+  display:flex;align-items:center;gap:12px;
+}
+#detail-signal{
+  display:flex;align-items:center;gap:16px;margin-top:8px;
+}
+.signal-pill{
+  font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:20px;
+  font-weight:500;
+}
+.signal-pill.haussier{color:var(--green);background:#3dd68c18;border:1px solid #3dd68c40}
+.signal-pill.baissier{color:var(--red);background:#ff555518;border:1px solid #ff555540}
+.signal-pill.neutre{color:var(--text2);background:var(--s2);border:1px solid var(--border)}
+.signal-meta{font-family:var(--mono);font-size:9px;color:var(--text2)}
+#detail-close{
+  font-family:var(--mono);font-size:8px;color:var(--text3);background:none;
+  border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;
+  margin-left:auto;
+}
+#detail-close:hover{color:var(--text2)}
+
+/* CONFIDENCE BARS */
+.conf-section{
+  padding:10px 20px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;gap:16px;flex-shrink:0;
+}
+.conf-item{flex:1}
+.conf-label{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
+.conf-track{height:3px;background:var(--s2);border-radius:2px;overflow:hidden}
+.conf-fill{height:100%;border-radius:2px;transition:width .5s}
+.conf-val{font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:2px}
+
+/* GRID BLOCS */
+#detail-body{
+  flex:1;overflow-y:auto;padding:16px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto auto;
+  gap:12px;align-content:start;
+}
+#detail-body::-webkit-scrollbar{width:3px}
+#detail-body::-webkit-scrollbar-track{background:var(--s1)}
+#detail-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.bloc{
+  background:var(--s1);border:1px solid var(--border);border-radius:6px;
+  overflow:hidden;min-height:140px;position:relative;
+}
+.bloc.full-width{grid-column:1/-1}
+.bloc-header{
+  padding:10px 14px 8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.bloc-title{font-family:var(--mono);font-size:7px;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
+.bloc-body{padding:12px 14px}
+
+/* GRAPHE CAUSAL */
+#causal-svg{width:100%;height:200px}
+.node circle{cursor:pointer;transition:r .2s}
+.node text{font-size:8px;font-family:'DM Mono',monospace;fill:#c8d4e8;pointer-events:none}
+.link{stroke-opacity:0.6;stroke-width:1.5}
+
+/* CAUSES */
+.cause-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--border);
+}
+.cause-item:last-child{border-bottom:none}
+.cause-direction{
+  font-size:10px;flex-shrink:0;width:16px;text-align:center;margin-top:1px;
+}
+.cause-text{flex:1}
+.cause-type{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.cause-expl{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.cause-force{
+  font-family:var(--mono);font-size:8px;flex-shrink:0;
+  padding:2px 6px;border-radius:2px;background:var(--s2);color:var(--text3);
+}
+
+/* EXPLICATION */
+.expl-text{
+  font-size:13px;line-height:1.7;color:var(--text2);
+}
+.expl-highlight{color:var(--text);font-weight:500}
+
+/* CONTRADICTION WARNING */
+.contradiction-warning{
+  background:#f5a62310;border:1px solid #f5a62340;border-radius:4px;
+  padding:8px 12px;margin-bottom:10px;
+  font-family:var(--mono);font-size:9px;color:var(--yellow);
+}
+
+/* LOADING */
+#loading{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;z-index:100;
+}
+.spinner{
+  width:24px;height:24px;border:2px solid var(--border);
+  border-top-color:var(--blue);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-text{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px}
+
+/* EMPTY */
+#empty-state{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;padding:40px;
+}
+#empty-state p{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px;text-align:center}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loading-text">CHARGEMENT DES SIGNAUX...</div>
+</div>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">OMNIS</div>
+    <nav class="nav">
+      <button class="nav-btn" onclick="window.location.href='/'">MAP</button>
+      <button class="nav-btn active">PRÉDICTIONS</button>
+      <button class="nav-btn">FAVORIS</button>
+      <button class="nav-btn">NEWS</button>
+      <button class="nav-btn">MARCHÉS</button>
+    </nav>
+    <div class="header-right">
+      <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
+      <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+      <span id="last-update">—</span>
+    </div>
+  </header>
+
+  <!-- FILTRES -->
+  <div id="filters">
+    <button class="filter-btn active" onclick="setFilter('dir','all',this)" data-filter="dir">TOUS</button>
+    <button class="filter-btn" onclick="setFilter('dir','haussier',this)" data-filter="dir">▲ HAUSSE</button>
+    <button class="filter-btn" onclick="setFilter('dir','baissier',this)" data-filter="dir">▼ BAISSE</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn active" onclick="setFilter('type','all',this)" data-filter="type">TOUS</button>
+    <button class="filter-btn" onclick="setFilter('type','energie',this)" data-filter="type">ÉNERGIE</button>
+    <button class="filter-btn" onclick="setFilter('type','metal',this)" data-filter="type">MÉTAUX</button>
+    <button class="filter-btn" onclick="setFilter('type','crypto',this)" data-filter="type">CRYPTO</button>
+    <button class="filter-btn" onclick="setFilter('type','indice',this)" data-filter="type">INDICES</button>
+    <button class="filter-btn" onclick="setFilter('type','devise',this)" data-filter="type">DEVISES</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn active" onclick="setFilter('prob','all',this)" data-filter="prob">TOUT %</button>
+    <button class="filter-btn" onclick="setFilter('prob','50',this)" data-filter="prob">> 50%</button>
+    <button class="filter-btn" onclick="setFilter('prob','65',this)" data-filter="prob">> 65%</button>
+    <button class="filter-btn" onclick="setFilter('prob','80',this)" data-filter="prob">> 80%</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- LISTE -->
+    <div id="list-panel">
+      <div id="list-header">
+        <span id="list-count">— ACTIFS</span>
+        <button id="list-sort" onclick="toggleSort()">TRI: PROB ▼</button>
+      </div>
+      <div id="list-cols">
+        <span class="col-label">Actif</span>
+        <span class="col-label">Direction</span>
+        <span class="col-label" style="text-align:center">Prob.</span>
+        <span class="col-label">Force</span>
+        <span class="col-label" style="text-align:center">Délai</span>
+      </div>
+      <div id="list-body">
+        <div id="empty-state" style="display:none">
+          <p>AUCUN ACTIF NE CORRESPOND</p>
+          <p>AUX FILTRES SÉLECTIONNÉS</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DÉTAIL -->
+    <div id="detail-panel">
+      <div id="detail-header">
+        <div id="detail-title">—</div>
+        <div id="detail-signal">
+          <span id="detail-pill" class="signal-pill neutre">NEUTRE</span>
+          <span id="detail-prob" class="signal-meta">—</span>
+          <span id="detail-amp" class="signal-meta">—</span>
+          <span id="detail-delay" class="signal-meta">—</span>
+          <button id="detail-close" onclick="closeDetail()">✕ FERMER</button>
+        </div>
+      </div>
+
+      <!-- CONFIANCE -->
+      <div class="conf-section" id="conf-section">
+        <div class="conf-item">
+          <div class="conf-label" id="label-data">DONNÉES</div>
+          <div class="conf-track"><div class="conf-fill" id="conf-data" style="width:0%;background:var(--blue)"></div></div>
+          <div class="conf-val" id="val-data">—</div>
+        </div>
+        <div class="conf-item">
+          <div class="conf-label" id="label-hist">HISTORIQUE</div>
+          <div class="conf-track"><div class="conf-fill" id="conf-hist" style="width:0%;background:var(--purple)"></div></div>
+          <div class="conf-val" id="val-hist">—</div>
+        </div>
+        <div class="conf-item">
+          <div class="conf-label" id="label-cons">CONSENSUS</div>
+          <div class="conf-track"><div class="conf-fill" id="conf-cons" style="width:0%;background:var(--cyan)"></div></div>
+          <div class="conf-val" id="val-cons">—</div>
+        </div>
+        <div class="conf-item">
+          <div class="conf-label" id="label-global">GLOBAL</div>
+          <div class="conf-track"><div class="conf-fill" id="conf-global" style="width:0%;background:var(--green)"></div></div>
+          <div class="conf-val" id="val-global">—</div>
+        </div>
+      </div>
+
+      <!-- BLOCS -->
+      <div id="detail-body">
+
+        <!-- GRAPHE CAUSAL -->
+        <div class="bloc">
+          <div class="bloc-header">
+            <span class="bloc-title" id="lbl-causal">GRAPHE CAUSAL</span>
+          </div>
+          <svg id="causal-svg"></svg>
+        </div>
+
+        <!-- CAUSES -->
+        <div class="bloc">
+          <div class="bloc-header">
+            <span class="bloc-title" id="lbl-causes">CAUSES ACTIVES</span>
+          </div>
+          <div class="bloc-body" id="causes-list"></div>
+        </div>
+
+        <!-- EXPLICATION -->
+        <div class="bloc full-width">
+          <div class="bloc-header">
+            <span class="bloc-title" id="lbl-expl">ANALYSE</span>
+          </div>
+          <div class="bloc-body">
+            <div id="contradiction-warning" class="contradiction-warning" style="display:none"></div>
+            <div id="expl-text" class="expl-text">—</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  OMNIS PRÉDICTIONS — Logic
+// ══════════════════════════════════════════════════════════════
+
+const API = 'https://omnis-api-production.up.railway.app';
+let allSignals = [];
+let selectedAsset = null;
+let currentLang = 'fr';
+let sortBy = 'prob';
+let filters = { dir: 'all', type: 'all', prob: 'all' };
+
+// Labels multi-langue
+const LABELS = {
+  fr: {
+    loading: 'CHARGEMENT DES SIGNAUX...',
+    assets: 'ACTIFS',
+    data: 'DONNÉES',
+    hist: 'HISTORIQUE',
+    cons: 'CONSENSUS',
+    global: 'GLOBAL',
+    causal: 'GRAPHE CAUSAL',
+    causes: 'CAUSES ACTIVES',
+    expl: 'ANALYSE',
+    contradiction: '⚠ Signal contradictoire détecté — des forces s\'opposent',
+    noData: 'Données insuffisantes',
+    delay: 'délai',
+    amplitude: 'amplitude',
+    probability: 'probabilité',
+  },
+  en: {
+    loading: 'LOADING SIGNALS...',
+    assets: 'ASSETS',
+    data: 'DATA',
+    hist: 'HISTORICAL',
+    cons: 'CONSENSUS',
+    global: 'GLOBAL',
+    causal: 'CAUSAL GRAPH',
+    causes: 'ACTIVE DRIVERS',
+    expl: 'ANALYSIS',
+    contradiction: '⚠ Contradictory signal — opposing forces detected',
+    noData: 'Insufficient data',
+    delay: 'delay',
+    amplitude: 'amplitude',
+    probability: 'probability',
+  }
+};
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function L(key) { return (LABELS[currentLang] || LABELS.fr)[key] || key; }
+
+function dirColor(dir) {
+  if(dir === 'HAUSSIER') return 'var(--green)';
+  if(dir === 'BAISSIER') return 'var(--red)';
+  return 'var(--text3)';
+}
+
+function dirArrow(dir) {
+  if(dir === 'HAUSSIER') return '▲';
+  if(dir === 'BAISSIER') return '▼';
+  return '—';
+}
+
+function dirClass(dir) {
+  if(dir === 'HAUSSIER') return 'haussier';
+  if(dir === 'BAISSIER') return 'baissier';
+  return 'neutre';
+}
+
+function dirLabel(dir, lang) {
+  const map = {
+    fr: { HAUSSIER: 'HAUSSE', BAISSIER: 'BAISSE', NEUTRE: 'NEUTRE' },
+    en: { HAUSSIER: 'BULLISH', BAISSIER: 'BEARISH', NEUTRE: 'NEUTRAL' },
+  };
+  return (map[lang] || map.fr)[dir] || dir;
+}
+
+function typeLabel(type, lang) {
+  const map = {
+    fr: { energie:'ÉNERGIE', metal:'MÉTAUX', crypto:'CRYPTO', indice:'INDICE', devise:'DEVISE', obligation:'OBLIGATION', derive:'DÉRIVÉ', autre:'AUTRE' },
+    en: { energie:'ENERGY', metal:'METALS', crypto:'CRYPTO', indice:'INDEX', devise:'FX', obligation:'BOND', derive:'DERIVATIVE', autre:'OTHER' },
+  };
+  return (map[lang] || map.fr)[type] || type;
+}
+
+// ── Fetch données ─────────────────────────────────────────────
+
+async function loadSignals() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loading-text').textContent = L('loading');
+
+  try {
+    const res = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`);
+    const data = await res.json();
+    allSignals = data.signals || [];
+
+    document.getElementById('last-update').textContent = data.updated || '—';
+    renderList();
+  } catch(e) {
+    console.error('Erreur chargement signaux:', e);
+    document.getElementById('loading-text').textContent = 'ERREUR DE CHARGEMENT';
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'none';
+}
+
+// ── Filtres ───────────────────────────────────────────────────
+
+function setFilter(type, val, btn) {
+  filters[type] = val;
+  // Mettre à jour les boutons du groupe
+  document.querySelectorAll(`.filter-btn[data-filter="${type}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function applyFilters(signals) {
+  return signals.filter(s => {
+    if(filters.dir !== 'all' && s.direction.toLowerCase() !== filters.dir) return false;
+    if(filters.type !== 'all' && s.type !== filters.type) return false;
+    if(filters.prob !== 'all' && s.probability < parseInt(filters.prob)) return false;
+    return true;
+  });
+}
+
+function toggleSort() {
+  sortBy = sortBy === 'prob' ? 'conf' : 'prob';
+  const label = sortBy === 'prob' ? 'PROB ▼' : 'CONF ▼';
+  document.getElementById('list-sort').textContent = `TRI: ${label}`;
+  renderList();
+}
+
+// ── Rendu liste ───────────────────────────────────────────────
+
+function renderList() {
+  const filtered = applyFilters(allSignals);
+  const sorted = [...filtered].sort((a,b) => {
+    if(sortBy === 'prob') return b.probability - a.probability;
+    return b.confidence - a.confidence;
+  });
+
+  document.getElementById('list-count').textContent = `${sorted.length} ${L('assets')}`;
+  const body = document.getElementById('list-body');
+  const empty = document.getElementById('empty-state');
+
+  if(sorted.length === 0) {
+    body.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  body.innerHTML = sorted.map(s => {
+    const isSelected = selectedAsset && selectedAsset.symbol === s.symbol;
+    const probColor = s.probability >= 70 ? 'var(--green)' : s.probability >= 55 ? 'var(--yellow)' : 'var(--text2)';
+    const forceColor = dirColor(s.direction);
+    const forcePct = Math.round((Math.max(s.force_hausse || 0, s.force_baisse || 0)) * 100);
+
+    return `
+    <div class="asset-row ${isSelected ? 'selected' : ''}" onclick="selectAsset('${s.symbol}')">
+      <div class="asset-name">
+        <span class="asset-symbol">${s.name || s.symbol}</span>
+        <span class="asset-type">${typeLabel(s.type, currentLang)}</span>
+      </div>
+      <div>
+        <span class="dir-badge ${dirClass(s.direction)}">
+          ${dirArrow(s.direction)} ${dirLabel(s.direction, currentLang)}
+        </span>
+      </div>
+      <div class="prob-cell" style="color:${probColor}">${s.probability.toFixed(0)}%</div>
+      <div>
+        <div class="force-bar">
+          <div class="force-fill" style="width:${forcePct}%;background:${forceColor}"></div>
+        </div>
+      </div>
+      <div class="delay-cell">J+${s.delay_min || '?'}</div>
+    </div>
+    `;
+  }).join('');
+}
+
+// ── Détail actif ──────────────────────────────────────────────
+
+function selectAsset(symbol) {
+  selectedAsset = allSignals.find(s => s.symbol === symbol);
+  if(!selectedAsset) return;
+
+  // Mettre à jour la sélection dans la liste
+  document.querySelectorAll('.asset-row').forEach(r => r.classList.remove('selected'));
+  const rows = document.querySelectorAll('.asset-row');
+  rows.forEach(r => { if(r.querySelector('.asset-symbol')?.textContent === (selectedAsset.name || selectedAsset.symbol)) r.classList.add('selected'); });
+
+  // Afficher le panel détail
+  document.getElementById('detail-panel').classList.add('visible');
+  document.getElementById('list-panel').style.maxWidth = '340px';
+
+  // Titre
+  document.getElementById('detail-title').textContent = selectedAsset.name || selectedAsset.symbol;
+
+  // Signal pill
+  const pill = document.getElementById('detail-pill');
+  pill.textContent = `${dirArrow(selectedAsset.direction)} ${dirLabel(selectedAsset.direction, currentLang)}`;
+  pill.className = `signal-pill ${dirClass(selectedAsset.direction)}`;
+
+  // Méta
+  const lang = currentLang;
+  document.getElementById('detail-prob').textContent =
+    `${selectedAsset.probability.toFixed(0)}% ${L('probability')}`;
+  document.getElementById('detail-amp').textContent =
+    selectedAsset.amplitude_min ? `${selectedAsset.amplitude_min.toFixed(1)}-${selectedAsset.amplitude_max.toFixed(1)}% ${L('amplitude')}` : '';
+  document.getElementById('detail-delay').textContent =
+    `J+${selectedAsset.delay_min}-${selectedAsset.delay_max} ${L('delay')}`;
+
+  // Confiance
+  const cd = selectedAsset.confidence_detail || {};
+  const setConf = (id, val, fillId, valId) => {
+    const pct = Math.round((val || 0) * 100);
+    document.getElementById(fillId).style.width = pct + '%';
+    document.getElementById(valId).textContent = pct + '%';
+  };
+  setConf('data',   cd.data || 0,       'conf-data', 'val-data');
+  setConf('hist',   cd.historical || 0, 'conf-hist', 'val-hist');
+  setConf('cons',   cd.consensus || 0,  'conf-cons', 'val-cons');
+  setConf('global', cd.global || 0,     'conf-global', 'val-global');
+
+  // Labels langue
+  document.getElementById('label-data').textContent   = L('data');
+  document.getElementById('label-hist').textContent   = L('hist');
+  document.getElementById('label-cons').textContent   = L('cons');
+  document.getElementById('label-global').textContent = L('global');
+  document.getElementById('lbl-causal').textContent   = L('causal');
+  document.getElementById('lbl-causes').textContent   = L('causes');
+  document.getElementById('lbl-expl').textContent     = L('expl');
+
+  // Contradiction
+  const contWarn = document.getElementById('contradiction-warning');
+  if(selectedAsset.has_contradiction) {
+    contWarn.style.display = 'block';
+    contWarn.textContent = L('contradiction');
+  } else {
+    contWarn.style.display = 'none';
+  }
+
+  // Explication
+  document.getElementById('expl-text').textContent =
+    selectedAsset.explanation || L('noData');
+
+  // Causes
+  renderCauses(selectedAsset.top_causes || []);
+
+  // Graphe causal
+  renderCausalGraph(selectedAsset);
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('visible');
+  document.getElementById('list-panel').style.maxWidth = '';
+  selectedAsset = null;
+  document.querySelectorAll('.asset-row').forEach(r => r.classList.remove('selected'));
+}
+
+// ── Causes actives ────────────────────────────────────────────
+
+function renderCauses(causes) {
+  const el = document.getElementById('causes-list');
+  if(!causes || !causes.length) {
+    el.innerHTML = `<div style="font-family:var(--mono);font-size:8px;color:var(--text3)">${L('noData')}</div>`;
+    return;
+  }
+
+  el.innerHTML = causes.map(c => {
+    const arrow = dirArrow(c.direction);
+    const col   = dirColor(c.direction);
+    const force = Math.round((c.force || 0) * 100);
+    const type  = (c.type || '').toUpperCase();
+    const expl  = c[`explanation_${currentLang}`] || c.explanation_fr || c.explanation_en || '';
+
+    return `
+    <div class="cause-item">
+      <span class="cause-direction" style="color:${col}">${arrow}</span>
+      <div class="cause-text">
+        <div class="cause-type">${type} ${c.rule_id ? '· ' + c.rule_id : ''}</div>
+        <div class="cause-expl">${expl.substring(0,120)}</div>
+      </div>
+      <span class="cause-force">${force}%</span>
+    </div>
+    `;
+  }).join('');
+}
+
+// ── Graphe causal D3 ──────────────────────────────────────────
+
+function renderCausalGraph(signal) {
+  const svg = d3.select('#causal-svg');
+  svg.selectAll('*').remove();
+
+  const W = document.getElementById('causal-svg').clientWidth || 300;
+  const H = 200;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+
+  const causes = signal.top_causes || [];
+  if(!causes.length) {
+    svg.append('text')
+      .attr('x', W/2).attr('y', H/2)
+      .attr('text-anchor','middle')
+      .attr('font-family','DM Mono,monospace')
+      .attr('font-size','9px')
+      .attr('fill','#3a4a5c')
+      .text(L('noData'));
+    return;
+  }
+
+  // Nœuds : actif central + causes
+  const nodes = [
+    { id: signal.symbol, label: signal.name || signal.symbol, type: 'asset', x: W/2, y: H/2 }
+  ];
+  const links = [];
+
+  causes.forEach((c, i) => {
+    const angle = (i / causes.length) * 2 * Math.PI - Math.PI/2;
+    const r = Math.min(W, H) * 0.33;
+    const id = c.rule_id || `cause_${i}`;
+    nodes.push({
+      id,
+      label: id,
+      type: c.direction === 'HAUSSIER' ? 'hausse' : c.direction === 'BAISSIER' ? 'baisse' : 'neutre',
+      x: W/2 + r * Math.cos(angle),
+      y: H/2 + r * Math.sin(angle),
+    });
+    links.push({ source: id, target: signal.symbol, force: c.force || 0.3 });
+  });
+
+  // Liens
+  svg.selectAll('.link')
+    .data(links).enter()
+    .append('line').attr('class','link')
+    .attr('x1', d => nodes.find(n=>n.id===d.source).x)
+    .attr('y1', d => nodes.find(n=>n.id===d.source).y)
+    .attr('x2', d => nodes.find(n=>n.id===d.target).x)
+    .attr('y2', d => nodes.find(n=>n.id===d.target).y)
+    .attr('stroke', d => {
+      const src = nodes.find(n=>n.id===d.source);
+      return src.type === 'hausse' ? '#3dd68c60' : src.type === 'baisse' ? '#ff555560' : '#3a4a5c';
+    })
+    .attr('stroke-width', d => 1 + d.force * 2);
+
+  // Nœuds
+  const nodeG = svg.selectAll('.node')
+    .data(nodes).enter()
+    .append('g').attr('class','node')
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+
+  nodeG.append('circle')
+    .attr('r', d => d.type === 'asset' ? 18 : 10)
+    .attr('fill', d => {
+      if(d.type === 'asset') return signal.direction === 'HAUSSIER' ? '#3dd68c20' : signal.direction === 'BAISSIER' ? '#ff555520' : '#1a2332';
+      if(d.type === 'hausse') return '#3dd68c20';
+      if(d.type === 'baisse') return '#ff555520';
+      return '#1a2332';
+    })
+    .attr('stroke', d => {
+      if(d.type === 'asset') return dirColor(signal.direction);
+      if(d.type === 'hausse') return '#3dd68c';
+      if(d.type === 'baisse') return '#ff5555';
+      return '#3a4a5c';
+    })
+    .attr('stroke-width', d => d.type === 'asset' ? 2 : 1);
+
+  nodeG.append('text')
+    .attr('dy', d => d.type === 'asset' ? 4 : 14)
+    .attr('text-anchor','middle')
+    .attr('font-size', d => d.type === 'asset' ? 9 : 7)
+    .attr('fill', d => d.type === 'asset' ? '#c8d4e8' : '#7a8fa8')
+    .text(d => d.label.substring(0,8));
+}
+
+// ── Langue ────────────────────────────────────────────────────
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btn-fr').classList.toggle('active', lang === 'fr');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  renderList();
+  if(selectedAsset) selectAsset(selectedAsset.symbol);
+  loadSignals();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadSignals();
+</script>
+</body>
+</html>
