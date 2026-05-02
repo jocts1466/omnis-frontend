@@ -5,251 +5,606 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>OMNIS — Prédictions</title>
 <script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600&display=swap');
+/* ─────────────────────────────────────────────────────────────
+   OMNIS PRÉDICTIONS — Premium Dark UI
+───────────────────────────────────────────────────────────── */
 
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#080c12;--s1:#0d1219;--s2:#111820;--s3:#161d28;
-  --border:#1a2332;--border2:#222c3a;
-  --text:#c8d4e8;--text2:#7a8fa8;--text3:#3a4a5c;
-  --mono:'DM Mono',monospace;--sans:'Space Grotesk',sans-serif;
-  --green:#3dd68c;--red:#ff5555;--yellow:#f5a623;--blue:#4a9eff;
-  --purple:#a855f7;--cyan:#06b6d4;
-}
-html,body{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;font-family:var(--sans)}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* LAYOUT */
-#app{display:flex;flex-direction:column;height:100vh}
-
-/* HEADER */
-header{
-  height:48px;background:var(--s1);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 20px;gap:24px;flex-shrink:0;
-  justify-content:space-between;
-}
-.logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:3px;color:var(--text)}
-.nav{display:flex;gap:4px}
-.nav-btn{
-  font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);
-  background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:3px;
-  transition:all .2s;
-}
-.nav-btn:hover{color:var(--text2);background:var(--s2)}
-.nav-btn.active{color:var(--text);background:var(--s2);border:1px solid var(--border)}
-.header-right{display:flex;align-items:center;gap:12px}
-.lang-btn{
-  font-family:var(--mono);font-size:8px;color:var(--text3);background:none;
-  border:1px solid var(--border);border-radius:3px;padding:4px 8px;cursor:pointer;
-}
-.lang-btn.active{color:var(--text2);border-color:var(--border2)}
-#last-update{font-family:var(--mono);font-size:8px;color:var(--text3)}
-
-/* FILTRES */
-#filters{
-  height:40px;background:var(--s1);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 20px;gap:8px;flex-shrink:0;
-}
-.filter-btn{
-  font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--text3);
-  background:var(--s2);border:1px solid var(--border);border-radius:3px;
-  padding:4px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;
-}
-.filter-btn:hover{color:var(--text2);border-color:var(--border2)}
-.filter-btn.active{background:var(--s3);border-color:var(--blue);color:var(--blue)}
-.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
-
-/* MAIN LAYOUT */
-#main{display:flex;flex:1;overflow:hidden}
-
-/* LISTE ACTIFS */
-#list-panel{
-  width:100%;min-width:340px;max-width:420px;
-  display:flex;flex-direction:column;border-right:1px solid var(--border);
-  transition:width .3s ease;overflow:hidden;flex-shrink:0;
-}
-#list-panel.collapsed{width:340px}
-#list-panel.expanded{width:100%}
-
-#list-header{
-  padding:12px 16px 8px;background:var(--s1);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-#list-count{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:2px}
-#list-sort{font-family:var(--mono);font-size:8px;color:var(--text3);background:none;border:none;cursor:pointer}
-
-/* COLONNES LISTE */
-#list-cols{
-  display:grid;
-  grid-template-columns:1fr 80px 60px 60px 50px;
-  padding:6px 16px;background:var(--s1);border-bottom:1px solid var(--border);
-  flex-shrink:0;
-}
-.col-label{font-family:var(--mono);font-size:7px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
-
-/* LIGNES ACTIFS */
-#list-body{overflow-y:auto;flex:1}
-#list-body::-webkit-scrollbar{width:3px}
-#list-body::-webkit-scrollbar-track{background:var(--s1)}
-#list-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-.asset-row{
-  display:grid;
-  grid-template-columns:1fr 80px 60px 60px 50px;
-  padding:10px 16px;border-bottom:1px solid var(--border);
-  cursor:pointer;transition:background .15s;align-items:center;
-}
-.asset-row:hover{background:var(--s2)}
-.asset-row.selected{background:var(--s3);border-left:2px solid var(--blue)}
-
-.asset-name{
-  display:flex;flex-direction:column;gap:2px;
-}
-.asset-symbol{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text)}
-.asset-type{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
-
-.dir-badge{
-  font-family:var(--mono);font-size:9px;font-weight:500;
-  padding:3px 8px;border-radius:3px;text-align:center;
-  display:inline-flex;align-items:center;gap:4px;
-}
-.dir-badge.haussier{color:var(--green);background:#3dd68c15;border:1px solid #3dd68c30}
-.dir-badge.baissier{color:var(--red);background:#ff555515;border:1px solid #ff555530}
-.dir-badge.neutre{color:var(--text3);background:var(--s2);border:1px solid var(--border)}
-
-.prob-cell{font-family:var(--mono);font-size:11px;text-align:center}
-.force-bar{height:4px;background:var(--s2);border-radius:2px;width:100%;overflow:hidden}
-.force-fill{height:100%;border-radius:2px;transition:width .3s}
-.delay-cell{font-family:var(--mono);font-size:9px;color:var(--text2);text-align:center}
-
-/* PANEL DÉTAIL */
-#detail-panel{
-  flex:1;display:none;flex-direction:column;overflow:hidden;
-}
-#detail-panel.visible{display:flex}
-
-#detail-header{
-  padding:16px 20px 12px;background:var(--s1);border-bottom:1px solid var(--border);
-  flex-shrink:0;
-}
-#detail-title{
-  font-family:var(--sans);font-size:18px;font-weight:600;color:var(--text);
-  display:flex;align-items:center;gap:12px;
-}
-#detail-signal{
-  display:flex;align-items:center;gap:16px;margin-top:8px;
-}
-.signal-pill{
-  font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:20px;
-  font-weight:500;
-}
-.signal-pill.haussier{color:var(--green);background:#3dd68c18;border:1px solid #3dd68c40}
-.signal-pill.baissier{color:var(--red);background:#ff555518;border:1px solid #ff555540}
-.signal-pill.neutre{color:var(--text2);background:var(--s2);border:1px solid var(--border)}
-.signal-meta{font-family:var(--mono);font-size:9px;color:var(--text2)}
-#detail-close{
-  font-family:var(--mono);font-size:8px;color:var(--text3);background:none;
-  border:1px solid var(--border);border-radius:3px;padding:4px 10px;cursor:pointer;
-  margin-left:auto;
-}
-#detail-close:hover{color:var(--text2)}
-
-/* CONFIDENCE BARS */
-.conf-section{
-  padding:10px 20px;background:var(--s1);border-bottom:1px solid var(--border);
-  display:flex;gap:16px;flex-shrink:0;
-}
-.conf-item{flex:1}
-.conf-label{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
-.conf-track{height:3px;background:var(--s2);border-radius:2px;overflow:hidden}
-.conf-fill{height:100%;border-radius:2px;transition:width .5s}
-.conf-val{font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:2px}
-
-/* GRID BLOCS */
-#detail-body{
-  flex:1;overflow-y:auto;padding:16px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  grid-template-rows:auto auto auto;
-  gap:12px;align-content:start;
-}
-#detail-body::-webkit-scrollbar{width:3px}
-#detail-body::-webkit-scrollbar-track{background:var(--s1)}
-#detail-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-.bloc{
-  background:var(--s1);border:1px solid var(--border);border-radius:6px;
-  overflow:hidden;min-height:140px;position:relative;
-}
-.bloc.full-width{grid-column:1/-1}
-.bloc-header{
-  padding:10px 14px 8px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-}
-.bloc-title{font-family:var(--mono);font-size:7px;letter-spacing:2px;color:var(--text3);text-transform:uppercase}
-.bloc-body{padding:12px 14px}
-
-/* GRAPHE CAUSAL */
-#causal-svg{width:100%;height:200px}
-.node circle{cursor:pointer;transition:r .2s}
-.node text{font-size:8px;font-family:'DM Mono',monospace;fill:#c8d4e8;pointer-events:none}
-.link{stroke-opacity:0.6;stroke-width:1.5}
-
-/* CAUSES */
-.cause-item{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:8px 0;border-bottom:1px solid var(--border);
-}
-.cause-item:last-child{border-bottom:none}
-.cause-direction{
-  font-size:10px;flex-shrink:0;width:16px;text-align:center;margin-top:1px;
-}
-.cause-text{flex:1}
-.cause-type{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
-.cause-expl{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
-.cause-force{
-  font-family:var(--mono);font-size:8px;flex-shrink:0;
-  padding:2px 6px;border-radius:2px;background:var(--s2);color:var(--text3);
+:root {
+  --bg:      #080c12;
+  --s1:      #0d1219;
+  --s2:      #111820;
+  --s3:      #161d28;
+  --border:  #1a2332;
+  --border2: #222c3a;
+  --text:    #c8d4e8;
+  --text2:   #7a8fa8;
+  --text3:   #3a4a5c;
+  --mono:    'DM Mono', monospace;
+  --sans:    'Space Grotesk', sans-serif;
+  --green:   #3dd68c;
+  --red:     #ff5555;
+  --yellow:  #f5a623;
+  --blue:    #4a9eff;
+  --purple:  #a855f7;
+  --cyan:    #06b6d4;
 }
 
-/* EXPLICATION */
-.expl-text{
-  font-size:13px;line-height:1.7;color:var(--text2);
-}
-.expl-highlight{color:var(--text);font-weight:500}
-
-/* CONTRADICTION WARNING */
-.contradiction-warning{
-  background:#f5a62310;border:1px solid #f5a62340;border-radius:4px;
-  padding:8px 12px;margin-bottom:10px;
-  font-family:var(--mono);font-size:9px;color:var(--yellow);
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* LOADING */
-#loading{
-  position:fixed;inset:0;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;z-index:100;
-}
-.spinner{
-  width:24px;height:24px;border:2px solid var(--border);
-  border-top-color:var(--blue);border-radius:50%;
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-#loading-text{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px}
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-/* EMPTY */
-#empty-state{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:12px;padding:40px;
-}
-#empty-state p{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px;text-align:center}
+/* ── Layout ── */
+#app { display: flex; flex-direction: column; height: 100vh; }
 
-/* SCROLLBAR */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:var(--s1)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+/* ── Header ── */
+header {
+  height: 52px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: var(--green);
+  opacity: 0.9;
+}
+
+.live-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: livePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(61,214,140,0.5); }
+  50%       { opacity: 0.5; box-shadow: 0 0 0 5px rgba(61,214,140,0); }
+}
+
+.nav {
+  display: flex;
+  gap: 2px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nav-btn {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 7px 14px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-btn:hover { color: var(--text2); background: var(--s2); }
+.nav-btn.active {
+  color: var(--text);
+  background: var(--s2);
+  border: 1px solid var(--border);
+}
+
+.header-right { display: flex; align-items: center; gap: 14px; }
+
+.lang-toggle {
+  display: flex;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lang-btn {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  background: none;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-btn.active { color: var(--text); background: var(--s3); }
+
+#last-update {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+/* ── Filters ── */
+#filters {
+  height: 40px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.filter-btn {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-btn:hover { color: var(--text2); border-color: var(--border); background: var(--s2); }
+.filter-btn.active {
+  color: var(--blue);
+  border-color: rgba(74,158,255,0.3);
+  background: rgba(74,158,255,0.06);
+}
+
+.filter-sep {
+  width: 1px; height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ── Main ── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── List Panel ── */
+#list-panel {
+  width: 380px;
+  min-width: 320px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: max-width 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+#list-header {
+  padding: 11px 18px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+#list-count {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: var(--text3);
+  letter-spacing: 2px;
+}
+
+#list-sort {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: var(--text3);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#list-sort:hover { color: var(--text2); border-color: var(--border2); }
+
+#list-cols {
+  display: grid;
+  grid-template-columns: 1fr 80px 56px 52px 44px;
+  padding: 7px 18px 7px 22px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.col-label {
+  font-family: var(--mono);
+  font-size: 6.5px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+#list-body { overflow-y: auto; flex: 1; }
+
+/* ── Asset Rows ── */
+.asset-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 56px 52px 44px;
+  padding: 11px 18px 11px 16px;
+  border-bottom: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  align-items: center;
+  transition: background 0.15s, border-left-color 0.15s;
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.asset-row.visible {
+  animation: rowSlideIn 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes rowSlideIn {
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.asset-row:hover { background: var(--s2); }
+.asset-row.dir-haussier:hover { border-left-color: rgba(61,214,140,0.5); }
+.asset-row.dir-baissier:hover { border-left-color: rgba(255,85,85,0.5); }
+.asset-row.dir-neutre:hover   { border-left-color: rgba(122,143,168,0.25); }
+.asset-row.selected           { background: var(--s3); }
+.asset-row.selected.dir-haussier { border-left-color: var(--green); }
+.asset-row.selected.dir-baissier { border-left-color: var(--red); }
+.asset-row.selected.dir-neutre   { border-left-color: var(--text2); }
+
+.asset-name { display: flex; flex-direction: column; gap: 3px; }
+.asset-symbol {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.asset-type {
+  font-family: var(--mono);
+  font-size: 6.5px;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.dir-badge {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 500;
+  padding: 3px 7px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dir-badge.haussier { color: var(--green); background: rgba(61,214,140,0.08);  border: 1px solid rgba(61,214,140,0.2); }
+.dir-badge.baissier { color: var(--red);   background: rgba(255,85,85,0.08);   border: 1px solid rgba(255,85,85,0.2); }
+.dir-badge.neutre   { color: var(--text3); background: var(--s2);              border: 1px solid var(--border); }
+
+.prob-cell {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.force-bar {
+  height: 3px;
+  background: var(--s3);
+  border-radius: 2px;
+  width: 100%;
+  overflow: hidden;
+}
+.force-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delay-cell {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text2);
+  text-align: center;
+}
+
+/* ── Empty State ── */
+#empty-state {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 40px;
+}
+#empty-state p {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+/* ── Detail Panel ── */
+#detail-panel {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+#detail-panel.visible {
+  display: flex;
+  animation: detailSlideIn 0.38s cubic-bezier(0.34, 1.26, 0.64, 1);
+}
+
+@keyframes detailSlideIn {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+#detail-header {
+  padding: 18px 24px 14px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#detail-title {
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.3px;
+}
+
+#detail-signal {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.signal-pill {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.signal-pill.haussier { color: var(--green); background: rgba(61,214,140,0.1);  border: 1px solid rgba(61,214,140,0.3); }
+.signal-pill.baissier { color: var(--red);   background: rgba(255,85,85,0.1);   border: 1px solid rgba(255,85,85,0.3); }
+.signal-pill.neutre   { color: var(--text2); background: var(--s2);             border: 1px solid var(--border); }
+
+.signal-meta {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text2);
+  letter-spacing: 0.5px;
+}
+
+#detail-close {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+#detail-close:hover { color: var(--text2); border-color: var(--border2); }
+
+/* ── Confidence Bars ── */
+.conf-section {
+  padding: 12px 24px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+}
+.conf-item { flex: 1; }
+.conf-label {
+  font-family: var(--mono);
+  font-size: 6.5px;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.conf-track {
+  height: 2px;
+  background: var(--s3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.conf-val {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+/* ── Detail Body ── */
+#detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-content: start;
+}
+
+.bloc {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  min-height: 160px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.bloc.visible {
+  animation: blocFadeIn 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes blocFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+.bloc:hover {
+  border-color: var(--border2);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+}
+.bloc.full-width { grid-column: 1 / -1; }
+
+.bloc-header {
+  padding: 10px 16px 9px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bloc-title {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.bloc-body { padding: 14px 16px; }
+
+/* ── Causal Graph ── */
+#causal-svg { width: 100%; height: 200px; }
+.node circle { cursor: pointer; }
+.node text { font-size: 8px; font-family: 'DM Mono',monospace; fill: #c8d4e8; pointer-events: none; }
+.link { stroke-width: 1.5; }
+
+/* ── Causes ── */
+.cause-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cause-item:last-child { border-bottom: none; }
+.cause-direction { font-size: 10px; flex-shrink: 0; width: 16px; text-align: center; margin-top: 1px; }
+.cause-text { flex: 1; }
+.cause-type {
+  font-family: var(--mono);
+  font-size: 6.5px;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.cause-expl { font-size: 11px; color: var(--text2); line-height: 1.5; }
+.cause-force {
+  font-family: var(--mono);
+  font-size: 8px;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: var(--s2);
+  color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+/* ── Explanation ── */
+.expl-text { font-size: 13px; line-height: 1.75; color: var(--text2); font-weight: 300; }
+
+/* ── Contradiction ── */
+.contradiction-warning {
+  background: rgba(245,166,35,0.07);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--yellow);
+  letter-spacing: 0.5px;
+}
+
+/* ── Loading ── */
+#loading {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 1.5px solid var(--border2);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#loading-text {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text3);
+  letter-spacing: 3px;
+}
 </style>
 </head>
 <body>
@@ -261,9 +616,13 @@ header{
 
 <div id="app">
 
-  <!-- HEADER -->
   <header>
-    <div class="logo">OMNIS</div>
+    <div class="logo">
+      OMNIS
+      <div class="live-badge">
+        <span class="live-dot"></span>LIVE
+      </div>
+    </div>
     <nav class="nav">
       <button class="nav-btn" onclick="parentNav('map')">MAP</button>
       <button class="nav-btn active">PRÉDICTIONS</button>
@@ -272,13 +631,14 @@ header{
       <button class="nav-btn" onclick="parentNav('marches')">MARCHÉS</button>
     </nav>
     <div class="header-right">
-      <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
-      <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
+        <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+      </div>
       <span id="last-update">—</span>
     </div>
   </header>
 
-  <!-- FILTRES -->
   <div id="filters">
     <button class="filter-btn active" onclick="setFilter('dir','all',this)" data-filter="dir">TOUS</button>
     <button class="filter-btn" onclick="setFilter('dir','haussier',this)" data-filter="dir">▲ HAUSSE</button>
@@ -292,15 +652,13 @@ header{
     <button class="filter-btn" onclick="setFilter('type','devise',this)" data-filter="type">DEVISES</button>
     <div class="filter-sep"></div>
     <button class="filter-btn active" onclick="setFilter('prob','all',this)" data-filter="prob">TOUT %</button>
-    <button class="filter-btn" onclick="setFilter('prob','50',this)" data-filter="prob">> 50%</button>
-    <button class="filter-btn" onclick="setFilter('prob','65',this)" data-filter="prob">> 65%</button>
-    <button class="filter-btn" onclick="setFilter('prob','80',this)" data-filter="prob">> 80%</button>
+    <button class="filter-btn" onclick="setFilter('prob','50',this)" data-filter="prob">&gt; 50%</button>
+    <button class="filter-btn" onclick="setFilter('prob','65',this)" data-filter="prob">&gt; 65%</button>
+    <button class="filter-btn" onclick="setFilter('prob','80',this)" data-filter="prob">&gt; 80%</button>
   </div>
 
-  <!-- MAIN -->
   <div id="main">
 
-    <!-- LISTE -->
     <div id="list-panel">
       <div id="list-header">
         <span id="list-count">— ACTIFS</span>
@@ -314,14 +672,13 @@ header{
         <span class="col-label" style="text-align:center">Délai</span>
       </div>
       <div id="list-body">
-        <div id="empty-state" style="display:none">
+        <div id="empty-state">
           <p>AUCUN ACTIF NE CORRESPOND</p>
           <p>AUX FILTRES SÉLECTIONNÉS</p>
         </div>
       </div>
     </div>
 
-    <!-- DÉTAIL -->
     <div id="detail-panel">
       <div id="detail-header">
         <div id="detail-title">—</div>
@@ -334,60 +691,45 @@ header{
         </div>
       </div>
 
-      <!-- CONFIANCE -->
-      <div class="conf-section" id="conf-section">
+      <div class="conf-section">
         <div class="conf-item">
           <div class="conf-label" id="label-data">DONNÉES</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-data" style="width:0%;background:var(--blue)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-data" style="background:var(--blue)"></div></div>
           <div class="conf-val" id="val-data">—</div>
         </div>
         <div class="conf-item">
           <div class="conf-label" id="label-hist">HISTORIQUE</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-hist" style="width:0%;background:var(--purple)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-hist" style="background:var(--purple)"></div></div>
           <div class="conf-val" id="val-hist">—</div>
         </div>
         <div class="conf-item">
           <div class="conf-label" id="label-cons">CONSENSUS</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-cons" style="width:0%;background:var(--cyan)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-cons" style="background:var(--cyan)"></div></div>
           <div class="conf-val" id="val-cons">—</div>
         </div>
         <div class="conf-item">
           <div class="conf-label" id="label-global">GLOBAL</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-global" style="width:0%;background:var(--green)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-global" style="background:var(--green)"></div></div>
           <div class="conf-val" id="val-global">—</div>
         </div>
       </div>
 
-      <!-- BLOCS -->
       <div id="detail-body">
-
-        <!-- GRAPHE CAUSAL -->
-        <div class="bloc">
-          <div class="bloc-header">
-            <span class="bloc-title" id="lbl-causal">GRAPHE CAUSAL</span>
-          </div>
+        <div class="bloc" id="bloc-causal">
+          <div class="bloc-header"><span class="bloc-title" id="lbl-causal">GRAPHE CAUSAL</span></div>
           <svg id="causal-svg"></svg>
         </div>
-
-        <!-- CAUSES -->
-        <div class="bloc">
-          <div class="bloc-header">
-            <span class="bloc-title" id="lbl-causes">CAUSES ACTIVES</span>
-          </div>
+        <div class="bloc" id="bloc-causes">
+          <div class="bloc-header"><span class="bloc-title" id="lbl-causes">CAUSES ACTIVES</span></div>
           <div class="bloc-body" id="causes-list"></div>
         </div>
-
-        <!-- EXPLICATION -->
-        <div class="bloc full-width">
-          <div class="bloc-header">
-            <span class="bloc-title" id="lbl-expl">ANALYSE</span>
-          </div>
+        <div class="bloc full-width" id="bloc-expl">
+          <div class="bloc-header"><span class="bloc-title" id="lbl-expl">ANALYSE</span></div>
           <div class="bloc-body">
             <div id="contradiction-warning" class="contradiction-warning" style="display:none"></div>
             <div id="expl-text" class="expl-text">—</div>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -400,45 +742,26 @@ header{
 // ══════════════════════════════════════════════════════════════
 
 const API = 'https://omnis-api-production.up.railway.app';
-let allSignals = [];
+let allSignals  = [];
 let selectedAsset = null;
 let currentLang = 'fr';
-let sortBy = 'prob';
-let filters = { dir: 'all', type: 'all', prob: 'all' };
+let sortBy      = 'prob';
+let filters     = { dir: 'all', type: 'all', prob: 'all' };
 
-// Labels multi-langue
 const LABELS = {
   fr: {
-    loading: 'CHARGEMENT DES SIGNAUX...',
-    assets: 'ACTIFS',
-    data: 'DONNÉES',
-    hist: 'HISTORIQUE',
-    cons: 'CONSENSUS',
-    global: 'GLOBAL',
-    causal: 'GRAPHE CAUSAL',
-    causes: 'CAUSES ACTIVES',
-    expl: 'ANALYSE',
-    contradiction: '⚠ Signal contradictoire détecté — des forces s\'opposent',
-    noData: 'Données insuffisantes',
-    delay: 'délai',
-    amplitude: 'amplitude',
-    probability: 'probabilité',
+    loading: 'CHARGEMENT DES SIGNAUX...', assets: 'ACTIFS',
+    data: 'DONNÉES', hist: 'HISTORIQUE', cons: 'CONSENSUS', global: 'GLOBAL',
+    causal: 'GRAPHE CAUSAL', causes: 'CAUSES ACTIVES', expl: 'ANALYSE',
+    contradiction: "⚠ Signal contradictoire détecté — des forces s'opposent",
+    noData: 'Données insuffisantes', delay: 'délai', amplitude: 'amplitude', probability: 'probabilité',
   },
   en: {
-    loading: 'LOADING SIGNALS...',
-    assets: 'ASSETS',
-    data: 'DATA',
-    hist: 'HISTORICAL',
-    cons: 'CONSENSUS',
-    global: 'GLOBAL',
-    causal: 'CAUSAL GRAPH',
-    causes: 'ACTIVE DRIVERS',
-    expl: 'ANALYSIS',
+    loading: 'LOADING SIGNALS...', assets: 'ASSETS',
+    data: 'DATA', hist: 'HISTORICAL', cons: 'CONSENSUS', global: 'GLOBAL',
+    causal: 'CAUSAL GRAPH', causes: 'ACTIVE DRIVERS', expl: 'ANALYSIS',
     contradiction: '⚠ Contradictory signal — opposing forces detected',
-    noData: 'Insufficient data',
-    delay: 'delay',
-    amplitude: 'amplitude',
-    probability: 'probability',
+    noData: 'Insufficient data', delay: 'delay', amplitude: 'amplitude', probability: 'probability',
   }
 };
 
@@ -447,20 +770,20 @@ const LABELS = {
 function L(key) { return (LABELS[currentLang] || LABELS.fr)[key] || key; }
 
 function dirColor(dir) {
-  if(dir === 'HAUSSIER') return 'var(--green)';
-  if(dir === 'BAISSIER') return 'var(--red)';
+  if (dir === 'HAUSSIER') return 'var(--green)';
+  if (dir === 'BAISSIER') return 'var(--red)';
   return 'var(--text3)';
 }
 
 function dirArrow(dir) {
-  if(dir === 'HAUSSIER') return '▲';
-  if(dir === 'BAISSIER') return '▼';
+  if (dir === 'HAUSSIER') return '▲';
+  if (dir === 'BAISSIER') return '▼';
   return '—';
 }
 
 function dirClass(dir) {
-  if(dir === 'HAUSSIER') return 'haussier';
-  if(dir === 'BAISSIER') return 'baissier';
+  if (dir === 'HAUSSIER') return 'haussier';
+  if (dir === 'BAISSIER') return 'baissier';
   return 'neutre';
 }
 
@@ -475,22 +798,26 @@ function dirLabel(dir, lang) {
 function typeLabel(type, lang) {
   const map = {
     fr: { energie:'ÉNERGIE', metal:'MÉTAUX', crypto:'CRYPTO', indice:'INDICE', devise:'DEVISE', obligation:'OBLIGATION', derive:'DÉRIVÉ', autre:'AUTRE' },
-    en: { energie:'ENERGY', metal:'METALS', crypto:'CRYPTO', indice:'INDEX', devise:'FX', obligation:'BOND', derive:'DERIVATIVE', autre:'OTHER' },
+    en: { energie:'ENERGY',  metal:'METALS', crypto:'CRYPTO', indice:'INDEX',  devise:'FX',     obligation:'BOND',        derive:'DERIVATIVE', autre:'OTHER' },
   };
   return (map[lang] || map.fr)[type] || type;
 }
 
-// ── Fetch données ─────────────────────────────────────────────
+function probColor(prob, dir) {
+  if (prob >= 70) return dir === 'HAUSSIER' ? 'var(--green)' : dir === 'BAISSIER' ? 'var(--red)' : 'var(--yellow)';
+  if (prob >= 55) return 'var(--yellow)';
+  return 'var(--text2)';
+}
+
+// ── Fetch ─────────────────────────────────────────────────────
 
 async function loadSignals() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('loading-text').textContent = L('loading');
-
   try {
-    const res = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`);
+    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`);
     const data = await res.json();
     allSignals = data.signals || [];
-
     document.getElementById('last-update').textContent = data.updated || '—';
     renderList();
   } catch(e) {
@@ -501,11 +828,10 @@ async function loadSignals() {
   }
 }
 
-// ── Filtres ───────────────────────────────────────────────────
+// ── Filters ───────────────────────────────────────────────────
 
 function setFilter(type, val, btn) {
   filters[type] = val;
-  // Mettre à jour les boutons du groupe
   document.querySelectorAll(`.filter-btn[data-filter="${type}"]`).forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderList();
@@ -513,35 +839,34 @@ function setFilter(type, val, btn) {
 
 function applyFilters(signals) {
   return signals.filter(s => {
-    if(filters.dir !== 'all' && s.direction.toLowerCase() !== filters.dir) return false;
-    if(filters.type !== 'all' && s.type !== filters.type) return false;
-    if(filters.prob !== 'all' && s.probability < parseInt(filters.prob)) return false;
+    if (filters.dir  !== 'all' && s.direction.toLowerCase() !== filters.dir) return false;
+    if (filters.type !== 'all' && s.type !== filters.type)                   return false;
+    if (filters.prob !== 'all' && s.probability < parseInt(filters.prob))    return false;
     return true;
   });
 }
 
 function toggleSort() {
   sortBy = sortBy === 'prob' ? 'conf' : 'prob';
-  const label = sortBy === 'prob' ? 'PROB ▼' : 'CONF ▼';
-  document.getElementById('list-sort').textContent = `TRI: ${label}`;
+  document.getElementById('list-sort').textContent = `TRI: ${sortBy === 'prob' ? 'PROB ▼' : 'CONF ▼'}`;
   renderList();
 }
 
-// ── Rendu liste ───────────────────────────────────────────────
+// ── Render List ───────────────────────────────────────────────
 
 function renderList() {
   const filtered = applyFilters(allSignals);
-  const sorted = [...filtered].sort((a,b) => {
-    if(sortBy === 'prob') return b.probability - a.probability;
-    return b.confidence - a.confidence;
-  });
+  const sorted   = [...filtered].sort((a, b) =>
+    sortBy === 'prob' ? b.probability - a.probability : b.confidence - a.confidence
+  );
 
   document.getElementById('list-count').textContent = `${sorted.length} ${L('assets')}`;
-  const body = document.getElementById('list-body');
+  const body  = document.getElementById('list-body');
   const empty = document.getElementById('empty-state');
 
-  if(sorted.length === 0) {
+  if (sorted.length === 0) {
     body.innerHTML = '';
+    body.appendChild(empty);
     empty.style.display = 'flex';
     return;
   }
@@ -549,78 +874,68 @@ function renderList() {
 
   body.innerHTML = sorted.map(s => {
     const isSelected = selectedAsset && selectedAsset.symbol === s.symbol;
-    const probColor = s.probability >= 70 ? 'var(--green)' : s.probability >= 55 ? 'var(--yellow)' : 'var(--text2)';
+    const pc         = probColor(s.probability, s.direction);
     const forceColor = dirColor(s.direction);
-    const forcePct = Math.round((Math.max(s.force_hausse || 0, s.force_baisse || 0)) * 100);
+    const forcePct   = Math.round(Math.max(s.force_hausse || 0, s.force_baisse || 0) * 100);
 
-    return `
-    <div class="asset-row ${isSelected ? 'selected' : ''}" onclick="selectAsset('${s.symbol}')">
+    return `<div class="asset-row dir-${dirClass(s.direction)}${isSelected ? ' selected' : ''}" onclick="selectAsset('${s.symbol}')">
       <div class="asset-name">
         <span class="asset-symbol">${s.name || s.symbol}</span>
         <span class="asset-type">${typeLabel(s.type, currentLang)}</span>
       </div>
-      <div>
-        <span class="dir-badge ${dirClass(s.direction)}">
-          ${dirArrow(s.direction)} ${dirLabel(s.direction, currentLang)}
-        </span>
-      </div>
-      <div class="prob-cell" style="color:${probColor}">${s.probability.toFixed(0)}%</div>
-      <div>
-        <div class="force-bar">
-          <div class="force-fill" style="width:${forcePct}%;background:${forceColor}"></div>
-        </div>
-      </div>
+      <div><span class="dir-badge ${dirClass(s.direction)}">${dirArrow(s.direction)} ${dirLabel(s.direction, currentLang)}</span></div>
+      <div class="prob-cell" style="color:${pc}">${s.probability.toFixed(0)}%</div>
+      <div><div class="force-bar"><div class="force-fill" data-pct="${forcePct}" style="background:${forceColor}"></div></div></div>
       <div class="delay-cell">J+${s.delay_min || '?'}</div>
-    </div>
-    `;
+    </div>`;
   }).join('');
+
+  // Cascade slide-in animation for rows
+  const rows = Array.from(body.querySelectorAll('.asset-row'));
+  rows.forEach((row, i) => {
+    row.style.animationDelay = `${i * 32}ms`;
+    row.classList.add('visible');
+  });
+
+  // Animate force bars after rows have appeared
+  const staggerEnd = rows.length * 32 + 80;
+  setTimeout(() => {
+    body.querySelectorAll('.force-fill').forEach((fill, i) => {
+      setTimeout(() => { fill.style.width = (fill.dataset.pct || '0') + '%'; }, i * 18);
+    });
+  }, staggerEnd);
 }
 
-// ── Détail actif ──────────────────────────────────────────────
+// ── Select Asset ──────────────────────────────────────────────
 
 function selectAsset(symbol) {
   selectedAsset = allSignals.find(s => s.symbol === symbol);
-  if(!selectedAsset) return;
+  if (!selectedAsset) return;
 
-  // Mettre à jour la sélection dans la liste
   document.querySelectorAll('.asset-row').forEach(r => r.classList.remove('selected'));
-  const rows = document.querySelectorAll('.asset-row');
-  rows.forEach(r => { if(r.querySelector('.asset-symbol')?.textContent === (selectedAsset.name || selectedAsset.symbol)) r.classList.add('selected'); });
+  document.querySelectorAll('.asset-row').forEach(r => {
+    if (r.querySelector('.asset-symbol')?.textContent === (selectedAsset.name || selectedAsset.symbol))
+      r.classList.add('selected');
+  });
 
-  // Afficher le panel détail
-  document.getElementById('detail-panel').classList.add('visible');
-  document.getElementById('list-panel').style.maxWidth = '340px';
+  const detailPanel = document.getElementById('detail-panel');
+  detailPanel.classList.remove('visible');
+  void detailPanel.offsetWidth; // force reflow to retrigger animation
+  detailPanel.classList.add('visible');
+  document.getElementById('list-panel').style.maxWidth = '380px';
 
-  // Titre
   document.getElementById('detail-title').textContent = selectedAsset.name || selectedAsset.symbol;
 
-  // Signal pill
   const pill = document.getElementById('detail-pill');
   pill.textContent = `${dirArrow(selectedAsset.direction)} ${dirLabel(selectedAsset.direction, currentLang)}`;
   pill.className = `signal-pill ${dirClass(selectedAsset.direction)}`;
 
-  // Méta
-  const lang = currentLang;
-  document.getElementById('detail-prob').textContent =
-    `${selectedAsset.probability.toFixed(0)}% ${L('probability')}`;
-  document.getElementById('detail-amp').textContent =
-    selectedAsset.amplitude_min ? `${selectedAsset.amplitude_min.toFixed(1)}-${selectedAsset.amplitude_max.toFixed(1)}% ${L('amplitude')}` : '';
-  document.getElementById('detail-delay').textContent =
-    `J+${selectedAsset.delay_min}-${selectedAsset.delay_max} ${L('delay')}`;
+  document.getElementById('detail-prob').textContent  = `${selectedAsset.probability.toFixed(0)}% ${L('probability')}`;
+  document.getElementById('detail-amp').textContent   = selectedAsset.amplitude_min
+    ? `${selectedAsset.amplitude_min.toFixed(1)}–${selectedAsset.amplitude_max.toFixed(1)}% ${L('amplitude')}` : '';
+  document.getElementById('detail-delay').textContent = `J+${selectedAsset.delay_min}–${selectedAsset.delay_max} ${L('delay')}`;
 
-  // Confiance
-  const cd = selectedAsset.confidence_detail || {};
-  const setConf = (id, val, fillId, valId) => {
-    const pct = Math.round((val || 0) * 100);
-    document.getElementById(fillId).style.width = pct + '%';
-    document.getElementById(valId).textContent = pct + '%';
-  };
-  setConf('data',   cd.data || 0,       'conf-data', 'val-data');
-  setConf('hist',   cd.historical || 0, 'conf-hist', 'val-hist');
-  setConf('cons',   cd.consensus || 0,  'conf-cons', 'val-cons');
-  setConf('global', cd.global || 0,     'conf-global', 'val-global');
-
-  // Labels langue
+  // Labels i18n
   document.getElementById('label-data').textContent   = L('data');
   document.getElementById('label-hist').textContent   = L('hist');
   document.getElementById('label-cons').textContent   = L('cons');
@@ -629,24 +944,54 @@ function selectAsset(symbol) {
   document.getElementById('lbl-causes').textContent   = L('causes');
   document.getElementById('lbl-expl').textContent     = L('expl');
 
-  // Contradiction
+  // Reset confidence bars instantly, then animate fill
+  ['conf-data','conf-hist','conf-cons','conf-global'].forEach(id => {
+    document.getElementById(id).style.transition = 'none';
+    document.getElementById(id).style.width = '0%';
+  });
+  ['val-data','val-hist','val-cons','val-global'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+
+  const cd = selectedAsset.confidence_detail || {};
+  const confItems = [
+    { fillId: 'conf-data',   valId: 'val-data',   val: cd.data       || 0 },
+    { fillId: 'conf-hist',   valId: 'val-hist',   val: cd.historical || 0 },
+    { fillId: 'conf-cons',   valId: 'val-cons',   val: cd.consensus  || 0 },
+    { fillId: 'conf-global', valId: 'val-global', val: cd.global     || 0 },
+  ];
+  confItems.forEach((item, i) => {
+    const pct = Math.round(item.val * 100);
+    setTimeout(() => {
+      const el = document.getElementById(item.fillId);
+      el.style.transition = 'width 0.65s cubic-bezier(0.4, 0, 0.2, 1)';
+      el.style.width = pct + '%';
+      document.getElementById(item.valId).textContent = pct + '%';
+    }, 80 + i * 60);
+  });
+
+  // Contradiction warning
   const contWarn = document.getElementById('contradiction-warning');
-  if(selectedAsset.has_contradiction) {
+  if (selectedAsset.has_contradiction) {
     contWarn.style.display = 'block';
     contWarn.textContent = L('contradiction');
   } else {
     contWarn.style.display = 'none';
   }
 
-  // Explication
-  document.getElementById('expl-text').textContent =
-    selectedAsset.explanation || L('noData');
+  document.getElementById('expl-text').textContent = selectedAsset.explanation || L('noData');
 
-  // Causes
   renderCauses(selectedAsset.top_causes || []);
-
-  // Graphe causal
   renderCausalGraph(selectedAsset);
+
+  // Cascade fade-in for blocs
+  ['bloc-causal','bloc-causes','bloc-expl'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('visible');
+    el.style.opacity = '0';
+    el.style.animationDelay = `${i * 90}ms`;
+    setTimeout(() => el.classList.add('visible'), 10);
+  });
 }
 
 function closeDetail() {
@@ -656,70 +1001,61 @@ function closeDetail() {
   document.querySelectorAll('.asset-row').forEach(r => r.classList.remove('selected'));
 }
 
-// ── Causes actives ────────────────────────────────────────────
+// ── Render Causes ─────────────────────────────────────────────
 
 function renderCauses(causes) {
   const el = document.getElementById('causes-list');
-  if(!causes || !causes.length) {
-    el.innerHTML = `<div style="font-family:var(--mono);font-size:8px;color:var(--text3)">${L('noData')}</div>`;
+  if (!causes || !causes.length) {
+    el.innerHTML = `<div style="font-family:var(--mono);font-size:8px;color:var(--text3);padding:8px 0">${L('noData')}</div>`;
     return;
   }
-
   el.innerHTML = causes.map(c => {
     const arrow = dirArrow(c.direction);
     const col   = dirColor(c.direction);
     const force = Math.round((c.force || 0) * 100);
     const type  = (c.type || '').toUpperCase();
     const expl  = c[`explanation_${currentLang}`] || c.explanation_fr || c.explanation_en || '';
-
-    return `
-    <div class="cause-item">
+    return `<div class="cause-item">
       <span class="cause-direction" style="color:${col}">${arrow}</span>
       <div class="cause-text">
-        <div class="cause-type">${type} ${c.rule_id ? '· ' + c.rule_id : ''}</div>
+        <div class="cause-type">${type}${c.rule_id ? ' · ' + c.rule_id : ''}</div>
         <div class="cause-expl">${expl.substring(0,120)}</div>
       </div>
       <span class="cause-force">${force}%</span>
-    </div>
-    `;
+    </div>`;
   }).join('');
 }
 
-// ── Graphe causal D3 ──────────────────────────────────────────
+// ── Causal Graph D3 ───────────────────────────────────────────
 
 function renderCausalGraph(signal) {
   const svg = d3.select('#causal-svg');
   svg.selectAll('*').remove();
 
-  const W = document.getElementById('causal-svg').clientWidth || 300;
+  const W = document.getElementById('causal-svg').clientWidth || 320;
   const H = 200;
   svg.attr('viewBox', `0 0 ${W} ${H}`);
 
   const causes = signal.top_causes || [];
-  if(!causes.length) {
+  if (!causes.length) {
     svg.append('text')
       .attr('x', W/2).attr('y', H/2)
       .attr('text-anchor','middle')
       .attr('font-family','DM Mono,monospace')
-      .attr('font-size','9px')
-      .attr('fill','#3a4a5c')
+      .attr('font-size','9px').attr('fill','#3a4a5c')
       .text(L('noData'));
     return;
   }
 
-  // Nœuds : actif central + causes
-  const nodes = [
-    { id: signal.symbol, label: signal.name || signal.symbol, type: 'asset', x: W/2, y: H/2 }
-  ];
+  const nodes = [{ id: signal.symbol, label: signal.name || signal.symbol, type:'asset', x: W/2, y: H/2 }];
   const links = [];
 
   causes.forEach((c, i) => {
-    const angle = (i / causes.length) * 2 * Math.PI - Math.PI/2;
-    const r = Math.min(W, H) * 0.33;
-    const id = c.rule_id || `cause_${i}`;
+    const angle = (i / causes.length) * 2 * Math.PI - Math.PI / 2;
+    const r     = Math.min(W, H) * 0.33;
+    const id    = c.rule_id || `cause_${i}`;
     nodes.push({
-      id,
-      label: id,
+      id, label: id,
       type: c.direction === 'HAUSSIER' ? 'hausse' : c.direction === 'BAISSIER' ? 'baisse' : 'neutre',
       x: W/2 + r * Math.cos(angle),
       y: H/2 + r * Math.sin(angle),
@@ -727,68 +1063,70 @@ function renderCausalGraph(signal) {
     links.push({ source: id, target: signal.symbol, force: c.force || 0.3 });
   });
 
-  // Liens
+  // Links with fade-in transition
   svg.selectAll('.link')
     .data(links).enter()
     .append('line').attr('class','link')
-    .attr('x1', d => nodes.find(n=>n.id===d.source).x)
-    .attr('y1', d => nodes.find(n=>n.id===d.source).y)
-    .attr('x2', d => nodes.find(n=>n.id===d.target).x)
-    .attr('y2', d => nodes.find(n=>n.id===d.target).y)
+    .attr('x1', d => nodes.find(n => n.id === d.source).x)
+    .attr('y1', d => nodes.find(n => n.id === d.source).y)
+    .attr('x2', d => nodes.find(n => n.id === d.target).x)
+    .attr('y2', d => nodes.find(n => n.id === d.target).y)
     .attr('stroke', d => {
-      const src = nodes.find(n=>n.id===d.source);
-      return src.type === 'hausse' ? '#3dd68c60' : src.type === 'baisse' ? '#ff555560' : '#3a4a5c';
+      const src = nodes.find(n => n.id === d.source);
+      return src.type === 'hausse' ? '#3dd68c50' : src.type === 'baisse' ? '#ff555550' : '#2a3a4c';
     })
-    .attr('stroke-width', d => 1 + d.force * 2);
+    .attr('stroke-width', d => 1 + d.force * 2)
+    .attr('stroke-opacity', 0)
+    .transition().duration(300).delay((d, i) => 150 + i * 70)
+    .attr('stroke-opacity', 0.6);
 
-  // Nœuds
+  // Nodes with staggered appear
   const nodeG = svg.selectAll('.node')
     .data(nodes).enter()
     .append('g').attr('class','node')
-    .attr('transform', d => `translate(${d.x},${d.y})`);
+    .attr('transform', d => `translate(${d.x},${d.y})`)
+    .attr('opacity', 0);
 
   nodeG.append('circle')
     .attr('r', d => d.type === 'asset' ? 18 : 10)
     .attr('fill', d => {
-      if(d.type === 'asset') return signal.direction === 'HAUSSIER' ? '#3dd68c20' : signal.direction === 'BAISSIER' ? '#ff555520' : '#1a2332';
-      if(d.type === 'hausse') return '#3dd68c20';
-      if(d.type === 'baisse') return '#ff555520';
-      return '#1a2332';
+      if (d.type === 'asset') return signal.direction === 'HAUSSIER' ? '#3dd68c15' : signal.direction === 'BAISSIER' ? '#ff555515' : '#161d28';
+      return d.type === 'hausse' ? '#3dd68c15' : d.type === 'baisse' ? '#ff555515' : '#161d28';
     })
     .attr('stroke', d => {
-      if(d.type === 'asset') return dirColor(signal.direction);
-      if(d.type === 'hausse') return '#3dd68c';
-      if(d.type === 'baisse') return '#ff5555';
-      return '#3a4a5c';
+      if (d.type === 'asset') return dirColor(signal.direction);
+      return d.type === 'hausse' ? '#3dd68c' : d.type === 'baisse' ? '#ff5555' : '#3a4a5c';
     })
-    .attr('stroke-width', d => d.type === 'asset' ? 2 : 1);
+    .attr('stroke-width', d => d.type === 'asset' ? 1.5 : 1);
 
   nodeG.append('text')
     .attr('dy', d => d.type === 'asset' ? 4 : 14)
     .attr('text-anchor','middle')
     .attr('font-size', d => d.type === 'asset' ? 9 : 7)
     .attr('fill', d => d.type === 'asset' ? '#c8d4e8' : '#7a8fa8')
-    .text(d => d.label.substring(0,8));
+    .text(d => d.label.substring(0, 8));
+
+  nodeG.transition().duration(220).delay((d, i) => i * 75).attr('opacity', 1);
 }
 
-// ── Langue ────────────────────────────────────────────────────
+// ── Language ──────────────────────────────────────────────────
 
 function setLang(lang) {
   currentLang = lang;
   document.getElementById('btn-fr').classList.toggle('active', lang === 'fr');
   document.getElementById('btn-en').classList.toggle('active', lang === 'en');
   renderList();
-  if(selectedAsset) selectAsset(selectedAsset.symbol);
+  if (selectedAsset) selectAsset(selectedAsset.symbol);
   loadSignals();
 }
 
-// ── Navigation vers parent ────────────────────────────────────
+// ── Parent navigation ─────────────────────────────────────────
+
 function parentNav(tab) {
   try {
-    // Si dans un iframe, appeler la nav du parent
-    if(window.parent && window.parent.switchTab) {
+    if (window.parent && window.parent.switchTab) {
       const btn = window.parent.document.querySelector(`[onclick*="switchTab('${tab}'"]`);
-      if(btn) window.parent.switchTab(tab, btn);
+      if (btn) window.parent.switchTab(tab, btn);
     } else {
       window.location.href = 'index.html';
     }
