@@ -496,10 +496,9 @@ async function loadSignals() {
   } catch(e) {
     console.error('Erreur chargement signaux:', e);
     document.getElementById('loading-text').textContent = 'ERREUR DE CHARGEMENT';
-    return;
+  } finally {
+    document.getElementById('loading').style.display = 'none';
   }
-
-  document.getElementById('loading').style.display = 'none';
 }
 
 // ── Filtres ───────────────────────────────────────────────────
