@@ -265,11 +265,11 @@ header{
   <header>
     <div class="logo">OMNIS</div>
     <nav class="nav">
-      <button class="nav-btn" onclick="window.location.href='index.html'">MAP</button>
+      <button class="nav-btn" onclick="parentNav('map')">MAP</button>
       <button class="nav-btn active">PRÉDICTIONS</button>
-      <button class="nav-btn" onclick="window.location.href='index.html#favoris'">FAVORIS</button>
-      <button class="nav-btn" onclick="window.location.href='index.html#news'">NEWS</button>
-      <button class="nav-btn" onclick="window.location.href='index.html#marches'">MARCHÉS</button>
+      <button class="nav-btn" onclick="parentNav('portfolio')">FAVORIS</button>
+      <button class="nav-btn" onclick="parentNav('news')">NEWS</button>
+      <button class="nav-btn" onclick="parentNav('marches')">MARCHÉS</button>
     </nav>
     <div class="header-right">
       <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
@@ -781,6 +781,21 @@ function setLang(lang) {
   renderList();
   if(selectedAsset) selectAsset(selectedAsset.symbol);
   loadSignals();
+}
+
+// ── Navigation vers parent ────────────────────────────────────
+function parentNav(tab) {
+  try {
+    // Si dans un iframe, appeler la nav du parent
+    if(window.parent && window.parent.switchTab) {
+      const btn = window.parent.document.querySelector(`[onclick*="switchTab('${tab}'"]`);
+      if(btn) window.parent.switchTab(tab, btn);
+    } else {
+      window.location.href = 'index.html';
+    }
+  } catch(e) {
+    window.location.href = 'index.html';
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────
