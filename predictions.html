@@ -135,14 +135,46 @@ html, body {
 }
 #list-sort:hover { color: var(--text2); border-color: var(--border2); }
 
+/* ── Accuracy bandeau ── */
+#accuracy-bar {
+  height: 30px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 18px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 1.5px;
+}
+#accuracy-global { font-weight: 500; }
+#accuracy-sub { color: var(--text3); font-size: 6.5px; }
+
 #list-cols {
   display: grid;
-  grid-template-columns: 1fr 80px 56px 52px 44px;
+  grid-template-columns: 1fr 80px 56px 52px 44px 40px;
   padding: 7px 18px 7px 22px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+
+/* ── Prediction history bloc ── */
+.pred-hist-row {
+  display: grid;
+  grid-template-columns: 72px 70px 48px 1fr 28px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 7.5px;
+}
+.pred-hist-row:last-child { border-bottom: none; }
+.pred-hist-date { color: var(--text3); font-size: 7px; }
+.pred-hist-result { text-align: center; font-size: 11px; }
+.acc-cell { font-family: var(--mono); font-size: 8px; font-weight: 500; text-align: center; }
 .col-label {
   font-family: var(--mono);
   font-size: 6.5px;
@@ -534,6 +566,12 @@ html, body {
     <button class="filter-btn" onclick="setFilter('prob','80',this)" data-filter="prob">&gt; 80%</button>
   </div>
 
+  <!-- BANDEAU PRÉCISION -->
+  <div id="accuracy-bar">
+    <span id="accuracy-global" style="color:var(--text3)">PRÉCISION —</span>
+    <span id="accuracy-sub">Vérification automatique à l'expiration de chaque prédiction</span>
+  </div>
+
   <div id="main">
 
     <div id="list-panel">
@@ -547,6 +585,7 @@ html, body {
         <span class="col-label" style="text-align:center">Prob.</span>
         <span class="col-label">Force</span>
         <span class="col-label" style="text-align:center">Délai</span>
+        <span class="col-label" style="text-align:center">Préc.</span>
       </div>
       <div id="list-body">
         <div id="empty-state">
@@ -607,6 +646,12 @@ html, body {
             <div id="expl-text" class="expl-text">—</div>
           </div>
         </div>
+        <div class="bloc full-width" id="bloc-pred-hist">
+          <div class="bloc-header"><span class="bloc-title">HISTORIQUE DES PRÉDICTIONS</span></div>
+          <div class="bloc-body" id="pred-hist-list" style="min-height:60px">
+            <div style="font-family:var(--mono);font-size:8px;color:var(--text3)">Chargement...</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -619,9 +664,10 @@ html, body {
 // ══════════════════════════════════════════════════════════════
 
 const API = 'https://omnis-api-production.up.railway.app';
-let allSignals  = [];
+let allSignals    = [];
 let selectedAsset = null;
-let currentLang = 'fr';
+let currentLang   = 'fr';
+let accuracyData  = { global: {}, per_asset: [] };  // cache accuracy
 let sortBy      = 'prob';
 let filters     = { dir: 'all', type: 'all', prob: 'all' };
 
@@ -684,6 +730,79 @@ function probColor(prob, dir) {
   if (prob >= 70) return dir === 'HAUSSIER' ? 'var(--green)' : dir === 'BAISSIER' ? 'var(--red)' : 'var(--yellow)';
   if (prob >= 55) return 'var(--yellow)';
   return 'var(--text2)';
+}
+
+// ── Accuracy ──────────────────────────────────────────────────
+
+async function loadAccuracy() {
+  try {
+    const res  = await fetch(`${API}/api/predictions/accuracy`);
+    const data = await res.json();
+    accuracyData = data;
+
+    const g    = data.global || {};
+    const bar  = document.getElementById('accuracy-global');
+    if (!bar) return;
+
+    if (!g.total || Number(g.total) === 0) {
+      bar.textContent = 'PRÉCISION — (pas encore de données)';
+      bar.style.color = 'var(--text3)';
+      return;
+    }
+    const pct     = Number(g.accuracy_pct || 0);
+    const color   = pct >= 60 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--text2)';
+    const pending = (data.pending || []).length;
+    bar.innerHTML  = `PRÉCISION GLOBALE : <span style="color:${color};font-size:9px">${pct.toFixed(0)}%</span>`
+                   + ` sur ${Math.round(g.total)} prédiction${g.total > 1 ? 's' : ''}`
+                   + (pending ? ` &nbsp;|&nbsp; En attente : ${pending}` : '');
+    bar.style.color = 'var(--text2)';
+  } catch(e) {
+    console.warn('Accuracy load:', e);
+  }
+}
+
+function getAssetAccuracy(symbol) {
+  const row = (accuracyData.per_asset || []).find(r => r.symbol === symbol);
+  if (!row || !row.accuracy_pct) return null;
+  return { pct: Number(row.accuracy_pct), total: Number(row.total || 0) };
+}
+
+async function renderPredHistory(symbol) {
+  const el = document.getElementById('pred-hist-list');
+  if (!el) return;
+  el.innerHTML = `<div style="font-family:var(--mono);font-size:7px;color:var(--text3)">Chargement...</div>`;
+  try {
+    const res  = await fetch(`${API}/api/predictions/history?limit=50`);
+    const data = await res.json();
+    const preds = (data.predictions || []).filter(p => p.symbol === symbol).slice(0, 5);
+    if (!preds.length) {
+      el.innerHTML = `<div style="font-family:var(--mono);font-size:7px;color:var(--text3);padding:4px 0">Aucune prédiction enregistrée pour cet actif</div>`;
+      return;
+    }
+    el.innerHTML = preds.map(p => {
+      const dir   = p.direction === 'HAUSSIER' ? 'HAUSSE' : p.direction === 'BAISSIER' ? 'BAISSE' : 'NEUTRE';
+      const dCol  = p.direction === 'HAUSSIER' ? 'var(--green)' : p.direction === 'BAISSIER' ? 'var(--red)' : 'var(--text3)';
+      const date  = p.created_at ? p.created_at.slice(0, 10) : '—';
+      const prob  = p.probability ? Number(p.probability).toFixed(0) + '%' : '—';
+      let result  = '⏳';
+      let rColor  = 'var(--text3)';
+      if (p.status === 'verified') {
+        result = p.correct ? '✓' : '✗';
+        rColor = p.correct ? 'var(--green)' : 'var(--red)';
+      } else if (p.status === 'expired') {
+        result = '—'; rColor = 'var(--text3)';
+      }
+      return `<div class="pred-hist-row">
+        <span class="pred-hist-date">${date}</span>
+        <span style="color:${dCol};font-family:var(--mono);font-size:7.5px;font-weight:500">${dir}</span>
+        <span style="font-family:var(--mono);font-size:7.5px;color:var(--text2);text-align:center">${prob}</span>
+        <span style="font-family:var(--mono);font-size:6.5px;color:var(--text3)">${p.actual_direction ? `→ ${p.actual_direction === 'HAUSSIER' ? 'HAUSSE' : 'BAISSE'} ${p.actual_amplitude ? Number(p.actual_amplitude).toFixed(1)+'%' : ''}` : p.status === 'pending' ? 'En attente' : '—'}</span>
+        <span class="pred-hist-result" style="color:${rColor}">${result}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:var(--mono);font-size:7px;color:var(--text3)">Erreur chargement</div>`;
+  }
 }
 
 // ── Fetch ─────────────────────────────────────────────────────
@@ -755,6 +874,11 @@ function renderList() {
     const forceColor = dirColor(s.direction);
     const forcePct   = Math.round(Math.max(s.force_hausse || 0, s.force_baisse || 0) * 100);
 
+    const acc      = getAssetAccuracy(s.symbol);
+    const accHtml  = acc
+      ? `<span class="acc-cell" style="color:${acc.pct >= 60 ? 'var(--green)' : acc.pct >= 50 ? 'var(--yellow)' : 'var(--text2)'}">${acc.pct.toFixed(0)}%</span>`
+      : `<span class="acc-cell" style="color:var(--text3)">—</span>`;
+
     return `<div class="asset-row dir-${dirClass(s.direction)}${isSelected ? ' selected' : ''}" onclick="selectAsset('${s.symbol}')">
       <div class="asset-name">
         <span class="asset-symbol">${s.name || s.symbol}</span>
@@ -764,6 +888,7 @@ function renderList() {
       <div class="prob-cell" style="color:${pc}">${s.probability.toFixed(0)}%</div>
       <div><div class="force-bar"><div class="force-fill" data-pct="${forcePct}" style="background:${forceColor}"></div></div></div>
       <div class="delay-cell">J+${s.delay_min || '?'}</div>
+      <div>${accHtml}</div>
     </div>`;
   }).join('');
 
@@ -860,10 +985,12 @@ function selectAsset(symbol) {
 
   renderCauses(selectedAsset.top_causes || []);
   renderCausalGraph(selectedAsset);
+  renderPredHistory(selectedAsset.symbol);
 
   // Cascade fade-in for blocs
-  ['bloc-causal','bloc-causes','bloc-expl'].forEach((id, i) => {
+  ['bloc-causal','bloc-causes','bloc-expl','bloc-pred-hist'].forEach((id, i) => {
     const el = document.getElementById(id);
+    if (!el) return;
     el.classList.remove('visible');
     el.style.opacity = '0';
     el.style.animationDelay = `${i * 90}ms`;
@@ -1014,6 +1141,7 @@ function parentNav(tab) {
 
 // ── Init ──────────────────────────────────────────────────────
 loadSignals();
+loadAccuracy();
 </script>
 </body>
 </html>
