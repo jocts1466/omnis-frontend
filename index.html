@@ -280,11 +280,6 @@ nav{
     <div id="tv-container" style="width:100%;flex:1;min-height:0;overflow:hidden"></div>
   </div>
 
-  <!-- Predictions iframe (nested) -->
-  <div id="view-predictions" style="display:none;flex:1;overflow:hidden;flex-direction:column">
-    <iframe src="predictions.html" style="width:100%;height:100%;border:none;flex:1" id="predictions-iframe"></iframe>
-  </div>
-
   <!-- Import modal -->
   <div id="import-modal" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
     <div style="background:var(--s1);border:1px solid var(--border2);border-radius:6px;width:460px;max-width:90%;padding:22px">
@@ -308,6 +303,11 @@ nav{
       <div id="import-feedback" style="margin-top:8px;font-family:var(--mono);font-size:7px;color:var(--green);display:none"></div>
     </div>
   </div>
+</div>
+
+<!-- ══ PRÉDICTIONS ══ -->
+<div class="view" id="view-predictions" style="flex-direction:column">
+  <iframe src="predictions.html" style="width:100%;height:100%;border:none;flex:1" id="predictions-iframe"></iframe>
 </div>
 
 <!-- ══ BRIEFING ══ -->
