@@ -601,8 +601,10 @@ let causalEvents=[];
 
 function _getCausalCoords(ev){
   if(ev.lat && ev.lon) return [parseFloat(ev.lon), parseFloat(ev.lat)];
-  // Chercher dans titre/description une mention de pays connu
-  const text = ((ev.title||'')+(ev.description||'')+(ev.evenement||'')).toLowerCase();
+  // Les événements ont evenement, description, categorie — pas title
+  const text = (
+    (ev.evenement||'')+(ev.description||'')+(ev.categorie||'')+(ev.resume||'')
+  ).toLowerCase();
   for(const [kw, coords] of Object.entries(COUNTRY_CAPS)){
     if(text.includes(kw)) return coords;
   }
@@ -610,15 +612,28 @@ function _getCausalCoords(ev){
 }
 
 async function loadCausalEvents(){
-  try{
-    const resp = await fetch(API_BASE+'/api/causal/ai/events',
-                             {signal:AbortSignal.timeout(15000)});
-    if(!resp.ok) return;
-    const data = await resp.json();
-    // L'endpoint retourne {events:[...]} ou un tableau direct
-    causalEvents = Array.isArray(data) ? data : (data.events || data.detected || []);
-    renderCausalEvents();
-  } catch(e){ console.warn('[Causal events]',e); }
+  const urls = [
+    API_BASE+'/api/causal/events',      // plus fiable, basé sur cache news
+    API_BASE+'/api/causal/ai/events',   // nécessite Claude API
+  ];
+  for(const url of urls){
+    try{
+      const resp = await fetch(url, {signal:AbortSignal.timeout(15000)});
+      if(!resp.ok){ console.warn('[Causal]',url,'→ HTTP',resp.status); continue; }
+      const data = await resp.json();
+      console.log('[Causal] response from', url, ':', data);
+      const evs = Array.isArray(data) ? data : (data.events || data.detected || []);
+      console.log('[Causal] events found:', evs.length);
+      if(!evs.length){ console.warn('[Causal] empty events, trying next url'); continue; }
+      // Diagnostic: combien ont des coords ?
+      const withCoords = evs.filter(e=>_getCausalCoords(e));
+      console.log('[Causal] with coords:', withCoords.length, '/', evs.length);
+      causalEvents = evs;
+      renderCausalEvents();
+      return;
+    } catch(e){ console.warn('[Causal]', url, e); }
+  }
+  console.warn('[Causal] all URLs failed or returned empty');
 }
 
 function renderCausalEvents(){
@@ -648,10 +663,10 @@ function renderCausalEvents(){
       .attr('cx',cx).attr('cy',cy).attr('r',2.5)
       .attr('fill',col).attr('fill-opacity',0.9);
 
-    // Tooltip
-    const title = ev.title || ev.evenement_declencheur || ev.description || 'Événement';
-    const date  = ev.date  || ev.detected_at || '';
-    const impact= ev.impact|| (ev.impacts && ev.impacts[0] && ev.impacts[0].cible) || '';
+    // Tooltip — champs réels de l'API : evenement, description, impacts[].cible
+    const title = ev.evenement || ev.description || ev.id || 'Événement causal';
+    const date  = ev.updated   || ev.detected_at || '';
+    const impact= (ev.impacts && ev.impacts[0] && ev.impacts[0].cible) || '';
     grp.on('mousemove', function(e){
       if(!tip) return;
       tip.innerHTML = '<b style="color:'+col+'">⬥ '+title.slice(0,60)+'</b>'
@@ -685,10 +700,19 @@ const ZONE_CENTERS = {
   Z13:[18.5,-34.0],Z14:[3.0,56.0],  Z15:[20.0,59.0], Z16:[-90.0,24.0],
 };
 
-function _zoneColor(score){
+function _zoneColor(score, status){
+  if(status==='CALIBRATION'||status==='NO_DATA') return '#555';
   if(score<0.3)return '#3dd68c';
   if(score<0.7)return '#e09030';
   return '#e05252';
+}
+
+function _deltaLabel(ratio){
+  if(ratio===null||ratio===undefined) return '';
+  const pct = Math.round((ratio-1)*100);
+  if(pct > 20)  return '<span style="color:#e05252">🔺 +'  +pct+'% vs moy</span>';
+  if(pct < -20) return '<span style="color:#3dd68c">🔻 '   +pct+'% vs moy</span>';
+  return '<span style="color:var(--text3)">➡️ Normal</span>';
 }
 
 function toggleMF(layer){
@@ -756,8 +780,9 @@ function renderZones(){
     const hasF = showPlanes && (fz.total  || 0) > 0;
     if(!hasM && !hasF) return;
 
+    const mStatus = mz.status || 'OK';
     const score   = Math.max(mz.anomaly_score||0, fz.anomaly_score||0);
-    if(!showAlerts && score >= 0.3) return;
+    if(!showAlerts && score >= 0.3 && mStatus !== 'CALIBRATION') return;
 
     const mTotal  = mz.total   || 0;
     const fTotal  = fz.total   || 0;
@@ -767,7 +792,7 @@ function renderZones(){
 
     // Rayon : base 8, max 25
     const r = 8 + Math.min(count / 20, 17);
-    const col = _zoneColor(score);
+    const col = _zoneColor(score, mStatus);
 
     const grp = gZones.append('g').attr('class','zone-grp').style('cursor','pointer');
 
@@ -795,16 +820,22 @@ function renderZones(){
     // Tooltip
     grp.on('mousemove', function(ev){
       if(!tip) return;
-      const statusTxt = score>=0.7
-        ? '<span style="color:#e05252">⚠️ ALERTE</span>'
-        : score>=0.3 ? '<span style="color:#e09030">! ATTENTION</span>'
-        : '<span style="color:#3dd68c">✓ NORMAL</span>';
+      let statusTxt;
+      if(mStatus==='CALIBRATION'||mStatus==='NO_DATA'){
+        statusTxt='<span style="color:#888">⏳ CALIBRATION (données insuffisantes)</span>';
+      } else if(score>=0.7){
+        statusTxt='<span style="color:#e05252">⚠️ ALERTE</span>';
+      } else if(score>=0.3){
+        statusTxt='<span style="color:#e09030">! ATTENTION</span>';
+      } else {
+        statusTxt='<span style="color:#3dd68c">✓ NORMAL</span>';
+      }
       const rows = [
         '<b style="color:'+col+'">'+(mz.name||fz.name||zid)+'</b>',
         hasM ? (_fmtCount(mTotal,mMil,'🚢')||'') : null,
         hasF ? (_fmtCount(fTotal,fMil,'✈️')||'') : null,
-        'Score tension : '+(score).toFixed(2)+' '+statusTxt,
-        score>=0.7 ? '<span style="color:#e05252;font-size:9px">⚠️ ALERTE</span>' : null,
+        mStatus==='CALIBRATION' ? 'Zone en cours de calibration' : 'Score tension : '+(score).toFixed(2)+' '+statusTxt,
+        mz.ratio_vs_baseline!=null ? _deltaLabel(mz.ratio_vs_baseline) : null,
       ].filter(Boolean).join('<br>');
       tip.innerHTML = rows;
       tip.style.display = 'block';
@@ -828,11 +859,13 @@ function renderMaritimeAlerts(){
   const allZ  = new Set([...Object.keys(mZones),...Object.keys(fZones)]);
   allZ.forEach(zid=>{
     const mz = mZones[zid]||{}; const fz = fZones[zid]||{};
-    const score = Math.max(mz.anomaly_score||0, fz.anomaly_score||0);
-    if(score < 0.15) return;
+    const score  = Math.max(mz.anomaly_score||0, fz.anomaly_score||0);
+    const status = mz.status || 'OK';
+    if(score < 0.15 && status !== 'CALIBRATION') return;
     items.push({zid, name: mz.name||fz.name||zid,
       mTotal:mz.total||0, fTotal:fz.total||0,
-      mMil:mz.military||0, fMil:fz.military||0, score});
+      mMil:mz.military||0, fMil:fz.military||0,
+      score, status, ratio: mz.ratio_vs_baseline});
   });
   items.sort((a,b)=>b.score-a.score);
 
@@ -843,15 +876,19 @@ function renderMaritimeAlerts(){
   }
 
   el.innerHTML = items.map(it=>{
-    const col  = _zoneColor(it.score);
-    const tag  = it.score>=0.7 ? 'ALERTE' : 'WATCH';
+    const col = _zoneColor(it.score, it.status);
+    const tag = it.status==='CALIBRATION' ? 'CAL.'
+              : it.score>=0.7 ? 'ALERTE' : 'WATCH';
     const parts = [];
-    if(it.mTotal) parts.push('🚢 '+it.mTotal+(it.mMil?' ('+it.mMil+' mil)':''));
-    if(it.fTotal) parts.push('✈️ '+it.fTotal+(it.fMil?' ('+it.fMil+' mil)':''));
+    if(it.mTotal) parts.push(_fmtCount(it.mTotal, it.mMil, '🚢'));
+    if(it.fTotal) parts.push(_fmtCount(it.fTotal, it.fMil, '✈️'));
+    const delta = it.ratio!=null ? _deltaLabel(it.ratio) : '';
     return '<div class="mal-item">'
       +'<div class="mal-dot" style="background:'+col+'"></div>'
       +'<div class="mal-name">'+it.name+'<br>'
-      +'<span style="color:var(--text3);font-size:6px">'+parts.join(' · ')+'</span></div>'
+      +'<span style="color:var(--text3);font-size:6px">'+(parts.filter(Boolean).join(' · '))+'</span>'
+      +(delta ? '<br>'+delta : '')
+      +'</div>'
       +'<div class="mal-tag" style="color:'+col+'">'+tag+'</div>'
       +'</div>';
   }).join('');
