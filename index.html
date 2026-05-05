@@ -807,61 +807,56 @@ function toggleMF(layer){
 
 function _mapDebug(html){ const el=document.getElementById('map-debug'); if(el){el.style.display='block';el.innerHTML=html;} }
 
+function fetchWithTimeout(url, ms){
+  const ctrl = new AbortController();
+  const id   = setTimeout(()=>ctrl.abort(), ms);
+  return fetch(API_BASE+url, {signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+
+function _debugPanel(){
+  const mZ = Object.keys((maritimeData||{}).zones||{}).length;
+  const fZ = Object.keys((flightData||{}).zones||{}).length;
+  const fAc= Object.values((flightData||{}).zones||{}).reduce((s,z)=>s+(z.total||0),0);
+  const mSig= maritimeData ? (maritimeData.signal==='INDISPONIBLE'?'⚠️ INDISPONIBLE':('✅ '+maritimeData.signal)) : '⏳';
+  const fSig= flightData   ? ('✅ '+( flightData.signal||'OK')+' '+fAc+'ac') : '⏳';
+  _mapDebug(`🚢 Maritime: ${mSig} (${mZ} zones)<br>✈️ Flights: ${fSig} (${fZ} zones)`);
+}
+
 async function loadMaritimeData(){
-  _mapDebug('⏳ Chargement maritime + vols...');
-  const t0 = Date.now();
-  let mStatus='⏳', fStatus='⏳', mZones=0, fZones=0, fAircraft=0;
+  _mapDebug('⏳ Vols en cours...');
 
+  // ── Phase 1 : vols en premier (ADSB.fi, rapide ~2-5s) ──────────
   try{
-    const [mResp, fResp] = await Promise.allSettled([
-      fetch(API_BASE+'/api/maritime/metrics',{signal:AbortSignal.timeout(25000)}),
-      fetch(API_BASE+'/api/flights/zones',   {signal:AbortSignal.timeout(25000)}),
-    ]);
-
-    // Maritime
-    if(mResp.status==='fulfilled' && mResp.value.ok){
-      const mData = await mResp.value.json();
-      maritimeData = mData;
-      mZones = Object.keys(mData.zones||{}).length;
-      mStatus = mData.signal==='INDISPONIBLE'
-        ? `⚠️ INDISPONIBLE (pas de clé AIS)`
-        : `✅ ${mData.signal} score=${((mData.score||0)*100).toFixed(0)}% zones=${mZones}`;
+    const fRes  = await fetchWithTimeout('/api/flights/zones', 20000);
+    if(fRes.ok){
+      flightData = await fRes.json();
+      lastMaritimeTs = Date.now();
+      updateLiveBadge();
+      renderZones();          // afficher immédiatement les avions
+      renderMaritimeAlerts();
+      _debugPanel();
     } else {
-      const err = mResp.status==='rejected' ? mResp.reason?.message : ('HTTP '+mResp.value?.status);
-      mStatus = `❌ ${err}`;
+      _mapDebug(`✈️ Flights HTTP ${fRes.status}`);
     }
-
-    // Vols
-    if(fResp.status==='fulfilled' && fResp.value.ok){
-      const fData = await fResp.value.json();
-      flightData = fData;
-      fZones    = Object.keys(fData.zones||{}).length;
-      fAircraft = Object.values(fData.zones||{}).reduce((s,z)=>s+(z.total||0),0);
-      fStatus = `✅ ${fData.signal||'OK'} zones=${fZones} avions=${fAircraft}`;
-    } else {
-      const err = fResp.status==='rejected' ? fResp.reason?.message : ('HTTP '+fResp.value?.status);
-      fStatus = `❌ ${err}`;
-    }
-
-    lastMaritimeTs = Date.now();
-    updateLiveBadge();
-    renderZones();
-    renderMaritimeAlerts();
-
-    const ms = Date.now()-t0;
-    const mZ = Object.keys((maritimeData||{}).zones||{}).length;
-    const fZ = Object.keys((flightData||{}).zones||{}).length;
-    _mapDebug(
-      `🚢 Maritime: ${mStatus}<br>`+
-      `✈️  Flights: ${fStatus}<br>`+
-      `🗺️  Zones rendues: maritime=${mZ} vols=${fZ}<br>`+
-      `⏱️  ${ms}ms`
-    );
-
   } catch(e){
-    _mapDebug(`❌ Erreur fatale: ${e.message}`);
-    console.error('[MAP] Erreur fatale:', e);
+    _mapDebug(`✈️ Flights: ${e.name==='AbortError'?'timeout 20s':e.message}`);
   }
+
+  // ── Phase 2 : maritime en background (AIS, peut être lent) ──────
+  fetchWithTimeout('/api/maritime/metrics', 30000)
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(data=>{
+      maritimeData = data;
+      renderZones();          // mise à jour avec bateaux si arrivés
+      renderMaritimeAlerts();
+      _debugPanel();
+    })
+    .catch(e=>{
+      const msg = e.name==='AbortError' ? 'timeout 30s (normal sans clé AIS)' : e.message;
+      // Mettre à jour uniquement le statut maritime dans le panneau
+      const el = document.getElementById('map-debug');
+      if(el) el.innerHTML = el.innerHTML.replace(/🚢.*?<br>/,'🚢 Maritime: ⚠️ '+msg+'<br>');
+    });
 }
 
 function updateLiveBadge(){
