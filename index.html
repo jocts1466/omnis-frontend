@@ -261,6 +261,10 @@ nav{
     <div class="hint">GLISSER · SCROLL POUR ZOOMER · CLIQUER SUR UN POINT</div>
     <div id="live-badge" class="live-badge"><span class="dot"></span>LIVE</div>
     <div id="zone-tip" class="zone-tip"></div>
+    <div id="map-debug" style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.82);
+         color:#ccc;font-family:monospace;font-size:9px;padding:7px 10px;z-index:1000;
+         max-width:320px;border-radius:4px;border:1px solid #333;line-height:1.7;
+         pointer-events:none;display:none"></div>
     <div class="map-controls">
       <div class="ctrl-btn" onclick="zoomIn()">+</div>
       <div class="ctrl-btn" onclick="zoomOut()">−</div>
@@ -801,12 +805,14 @@ function toggleMF(layer){
   renderZones();
 }
 
-async function loadMaritimeData(){
-  console.log('[DEBUG MAP] Début chargement maritime et flights');
-  try{
-    console.log('[DEBUG MAP] Fetching maritime...', API_BASE+'/api/maritime/metrics');
-    console.log('[DEBUG MAP] Fetching flights...',  API_BASE+'/api/flights/zones');
+function _mapDebug(html){ const el=document.getElementById('map-debug'); if(el){el.style.display='block';el.innerHTML=html;} }
 
+async function loadMaritimeData(){
+  _mapDebug('⏳ Chargement maritime + vols...');
+  const t0 = Date.now();
+  let mStatus='⏳', fStatus='⏳', mZones=0, fZones=0, fAircraft=0;
+
+  try{
     const [mResp, fResp] = await Promise.allSettled([
       fetch(API_BASE+'/api/maritime/metrics',{signal:AbortSignal.timeout(25000)}),
       fetch(API_BASE+'/api/flights/zones',   {signal:AbortSignal.timeout(25000)}),
@@ -816,20 +822,25 @@ async function loadMaritimeData(){
     if(mResp.status==='fulfilled' && mResp.value.ok){
       const mData = await mResp.value.json();
       maritimeData = mData;
-      console.log('[DEBUG MAP] Maritime response:', mData);
+      mZones = Object.keys(mData.zones||{}).length;
+      mStatus = mData.signal==='INDISPONIBLE'
+        ? `⚠️ INDISPONIBLE (pas de clé AIS)`
+        : `✅ ${mData.signal} score=${((mData.score||0)*100).toFixed(0)}% zones=${mZones}`;
     } else {
-      const reason = mResp.status==='rejected' ? mResp.reason : ('HTTP '+mResp.value?.status);
-      console.warn('[DEBUG MAP] Maritime ÉCHEC:', reason);
+      const err = mResp.status==='rejected' ? mResp.reason?.message : ('HTTP '+mResp.value?.status);
+      mStatus = `❌ ${err}`;
     }
 
     // Vols
     if(fResp.status==='fulfilled' && fResp.value.ok){
       const fData = await fResp.value.json();
       flightData = fData;
-      console.log('[DEBUG MAP] Flights response:', fData);
+      fZones    = Object.keys(fData.zones||{}).length;
+      fAircraft = Object.values(fData.zones||{}).reduce((s,z)=>s+(z.total||0),0);
+      fStatus = `✅ ${fData.signal||'OK'} zones=${fZones} avions=${fAircraft}`;
     } else {
-      const reason = fResp.status==='rejected' ? fResp.reason : ('HTTP '+fResp.value?.status);
-      console.warn('[DEBUG MAP] Flights ÉCHEC:', reason);
+      const err = fResp.status==='rejected' ? fResp.reason?.message : ('HTTP '+fResp.value?.status);
+      fStatus = `❌ ${err}`;
     }
 
     lastMaritimeTs = Date.now();
@@ -837,7 +848,20 @@ async function loadMaritimeData(){
     renderZones();
     renderMaritimeAlerts();
 
-  } catch(e){ console.error('[DEBUG MAP] Erreur fatale:', e); }
+    const ms = Date.now()-t0;
+    const mZ = Object.keys((maritimeData||{}).zones||{}).length;
+    const fZ = Object.keys((flightData||{}).zones||{}).length;
+    _mapDebug(
+      `🚢 Maritime: ${mStatus}<br>`+
+      `✈️  Flights: ${fStatus}<br>`+
+      `🗺️  Zones rendues: maritime=${mZ} vols=${fZ}<br>`+
+      `⏱️  ${ms}ms`
+    );
+
+  } catch(e){
+    _mapDebug(`❌ Erreur fatale: ${e.message}`);
+    console.error('[MAP] Erreur fatale:', e);
+  }
 }
 
 function updateLiveBadge(){
@@ -869,9 +893,10 @@ function renderZones(){
   const fZones = (flightData   && flightData.zones)   ? flightData.zones   : {};
   const allZids = new Set([...Object.keys(mZones),...Object.keys(fZones)]);
 
-  console.log('[DEBUG MAP] renderZones appelé', {maritime: mZones, flights: fZones});
-  console.log(`[DEBUG MAP] allZids=${allZids.size} showBoats=${showBoats} showPlanes=${showPlanes}`);
-  if(!allZids.size){ console.warn('[DEBUG MAP] Aucune zone à afficher — données vides'); return; }
+  if(!allZids.size){
+    _mapDebug('⚠️ renderZones: aucune zone (données vides)');
+    return;
+  }
 
   const tip = document.getElementById('zone-tip');
 
