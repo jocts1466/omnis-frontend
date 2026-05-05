@@ -802,18 +802,42 @@ function toggleMF(layer){
 }
 
 async function loadMaritimeData(){
+  console.log('[Maritime] Chargement en cours...');
   try{
-    const [mResp, fResp] = await Promise.all([
-      fetch(API_BASE+'/api/maritime/metrics',{signal:AbortSignal.timeout(20000)}),
-      fetch(API_BASE+'/api/flights/zones',   {signal:AbortSignal.timeout(20000)}),
+    // Appels parallèles avec timeout individuel
+    const [mResp, fResp] = await Promise.allSettled([
+      fetch(API_BASE+'/api/maritime/metrics',{signal:AbortSignal.timeout(25000)}),
+      fetch(API_BASE+'/api/flights/zones',   {signal:AbortSignal.timeout(25000)}),
     ]);
-    if(mResp.ok) maritimeData = await mResp.json();
-    if(fResp.ok) flightData   = await fResp.json();
+
+    // Maritime
+    if(mResp.status==='fulfilled' && mResp.value.ok){
+      maritimeData = await mResp.value.json();
+      const mZoneCount = Object.keys(maritimeData.zones||{}).length;
+      console.log(`[Maritime] OK — signal=${maritimeData.signal} zones=${mZoneCount} score=${maritimeData.score}`);
+    } else {
+      console.warn('[Maritime] Échec:', mResp.status==='rejected' ? mResp.reason : mResp.value?.status);
+    }
+
+    // Vols
+    if(fResp.status==='fulfilled' && fResp.value.ok){
+      flightData = await fResp.value.json();
+      const fZoneCount = Object.keys(flightData.zones||{}).length;
+      const fTotal = Object.values(flightData.zones||{}).reduce((s,z)=>s+(z.total||0),0);
+      console.log(`[Flights] OK — signal=${flightData.signal} zones=${fZoneCount} total_aircraft=${fTotal}`);
+    } else {
+      console.warn('[Flights] Échec:', fResp.status==='rejected' ? fResp.reason : fResp.value?.status);
+    }
+
     lastMaritimeTs = Date.now();
     updateLiveBadge();
+
+    console.log('[Maritime] Appel renderZones()...');
     renderZones();
     renderMaritimeAlerts();
-  } catch(e){ console.warn('[Maritime]',e); }
+    console.log('[Maritime] Rendu terminé');
+
+  } catch(e){ console.error('[Maritime] Erreur fatale:', e); }
 }
 
 function updateLiveBadge(){
@@ -835,13 +859,19 @@ function _fmtCount(total, mil, emoji){
 }
 
 function renderZones(){
-  if(!gZones || !projection) return;
+  if(!gZones || !projection){
+    console.warn('[renderZones] gZones ou projection manquant', {gZones:!!gZones, projection:!!projection});
+    return;
+  }
   gZones.selectAll('.zone-grp').remove();
-  if(!maritimeData && !flightData) return;
 
   const mZones = (maritimeData && maritimeData.zones) ? maritimeData.zones : {};
   const fZones = (flightData   && flightData.zones)   ? flightData.zones   : {};
   const allZids = new Set([...Object.keys(mZones),...Object.keys(fZones)]);
+
+  console.log(`[renderZones] mZones=${Object.keys(mZones).length} fZones=${Object.keys(fZones).length} allZids=${allZids.size}`);
+  if(!allZids.size){ console.log('[renderZones] Aucune zone à afficher'); return; }
+
   const tip = document.getElementById('zone-tip');
 
   allZids.forEach(zid => {
@@ -857,7 +887,12 @@ function renderZones(){
 
     const hasM = showBoats  && (mz.total || 0) > 0;
     const hasF = showPlanes && (fz.total  || 0) > 0;
-    if(!hasM && !hasF) return;
+    if(!hasM && !hasF){
+      // Log uniquement si on a des données mais elles sont filtrées
+      if((mz.total||0)+(fz.total||0) > 0)
+        console.log(`[renderZones] ${zid} skippé : showBoats=${showBoats} mTotal=${mz.total||0} showPlanes=${showPlanes} fTotal=${fz.total||0}`);
+      return;
+    }
 
     const mStatus = mz.status || 'OK';
     const score   = Math.max(mz.anomaly_score||0, fz.anomaly_score||0);
@@ -873,6 +908,7 @@ function renderZones(){
     const r = 8 + Math.min(count / 20, 17);
     const col = _zoneColor(score, mStatus);
 
+    console.log(`[renderZones] Dessin ${zid} cx=${cx?.toFixed(0)} cy=${cy?.toFixed(0)} r=${r.toFixed(1)} score=${score.toFixed(2)} col=${col}`);
     const grp = gZones.append('g').attr('class','zone-grp').style('cursor','pointer');
 
     // Anneau extérieur semi-transparent
