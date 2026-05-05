@@ -802,9 +802,11 @@ function toggleMF(layer){
 }
 
 async function loadMaritimeData(){
-  console.log('[Maritime] Chargement en cours...');
+  console.log('[DEBUG MAP] Début chargement maritime et flights');
   try{
-    // Appels parallèles avec timeout individuel
+    console.log('[DEBUG MAP] Fetching maritime...', API_BASE+'/api/maritime/metrics');
+    console.log('[DEBUG MAP] Fetching flights...',  API_BASE+'/api/flights/zones');
+
     const [mResp, fResp] = await Promise.allSettled([
       fetch(API_BASE+'/api/maritime/metrics',{signal:AbortSignal.timeout(25000)}),
       fetch(API_BASE+'/api/flights/zones',   {signal:AbortSignal.timeout(25000)}),
@@ -812,32 +814,30 @@ async function loadMaritimeData(){
 
     // Maritime
     if(mResp.status==='fulfilled' && mResp.value.ok){
-      maritimeData = await mResp.value.json();
-      const mZoneCount = Object.keys(maritimeData.zones||{}).length;
-      console.log(`[Maritime] OK — signal=${maritimeData.signal} zones=${mZoneCount} score=${maritimeData.score}`);
+      const mData = await mResp.value.json();
+      maritimeData = mData;
+      console.log('[DEBUG MAP] Maritime response:', mData);
     } else {
-      console.warn('[Maritime] Échec:', mResp.status==='rejected' ? mResp.reason : mResp.value?.status);
+      const reason = mResp.status==='rejected' ? mResp.reason : ('HTTP '+mResp.value?.status);
+      console.warn('[DEBUG MAP] Maritime ÉCHEC:', reason);
     }
 
     // Vols
     if(fResp.status==='fulfilled' && fResp.value.ok){
-      flightData = await fResp.value.json();
-      const fZoneCount = Object.keys(flightData.zones||{}).length;
-      const fTotal = Object.values(flightData.zones||{}).reduce((s,z)=>s+(z.total||0),0);
-      console.log(`[Flights] OK — signal=${flightData.signal} zones=${fZoneCount} total_aircraft=${fTotal}`);
+      const fData = await fResp.value.json();
+      flightData = fData;
+      console.log('[DEBUG MAP] Flights response:', fData);
     } else {
-      console.warn('[Flights] Échec:', fResp.status==='rejected' ? fResp.reason : fResp.value?.status);
+      const reason = fResp.status==='rejected' ? fResp.reason : ('HTTP '+fResp.value?.status);
+      console.warn('[DEBUG MAP] Flights ÉCHEC:', reason);
     }
 
     lastMaritimeTs = Date.now();
     updateLiveBadge();
-
-    console.log('[Maritime] Appel renderZones()...');
     renderZones();
     renderMaritimeAlerts();
-    console.log('[Maritime] Rendu terminé');
 
-  } catch(e){ console.error('[Maritime] Erreur fatale:', e); }
+  } catch(e){ console.error('[DEBUG MAP] Erreur fatale:', e); }
 }
 
 function updateLiveBadge(){
@@ -869,8 +869,9 @@ function renderZones(){
   const fZones = (flightData   && flightData.zones)   ? flightData.zones   : {};
   const allZids = new Set([...Object.keys(mZones),...Object.keys(fZones)]);
 
-  console.log(`[renderZones] mZones=${Object.keys(mZones).length} fZones=${Object.keys(fZones).length} allZids=${allZids.size}`);
-  if(!allZids.size){ console.log('[renderZones] Aucune zone à afficher'); return; }
+  console.log('[DEBUG MAP] renderZones appelé', {maritime: mZones, flights: fZones});
+  console.log(`[DEBUG MAP] allZids=${allZids.size} showBoats=${showBoats} showPlanes=${showPlanes}`);
+  if(!allZids.size){ console.warn('[DEBUG MAP] Aucune zone à afficher — données vides'); return; }
 
   const tip = document.getElementById('zone-tip');
 
