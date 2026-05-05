@@ -596,8 +596,87 @@ const COUNTRY_CAPS = {
   'yémen':     [44.2,15.4], 'nigeria':  [7.5,9.1],   'venezuela':[-66.9,10.5],
   'kazakhstan':[71.4,51.2], 'russia':   [37.6,55.7], 'pakistan':[73.0,33.7],
 };
-let gCausal;
+let gCausal, gWorldStates;
 let causalEvents=[];
+let worldStatesData=[];
+
+// Mapping state_id → {coords:[lon,lat], col}
+const WORLD_STATE_MAP = {
+  'UKRAINE_WAR':       {coords:[30.5,50.4], col:'#e05252'},
+  'IRAN_SANCTIONS':    {coords:[51.4,35.6], col:'#e09030'},
+  'HORMUZ_TENSION':    {coords:[56.2,26.5], col:'#e05252'},
+  'OPEP_PRODUCTION_POLICY':{coords:[46.7,24.6], col:'#e09030'},
+  'US_FED_EASING':     {coords:[-77.0,38.9], col:'#4a9eff'},
+  // Extra states communs
+  'RUSSIA_UKRAINE':    {coords:[30.5,50.4], col:'#e05252'},
+  'CHINA_TENSION':     {coords:[116.4,39.9],col:'#e09030'},
+  'GAZA_CONFLICT':     {coords:[34.5,31.5], col:'#e05252'},
+  'TAIWAN_TENSION':    {coords:[121.0,23.5],col:'#e09030'},
+};
+
+async function loadWorldStates(){
+  try{
+    const resp = await fetch(API_BASE+'/api/world/states',
+                             {signal:AbortSignal.timeout(10000)});
+    if(!resp.ok) return;
+    const data = await resp.json();
+    worldStatesData = data.states || [];
+    renderWorldStates();
+  } catch(e){ console.warn('[WorldStates]', e); }
+}
+
+function renderWorldStates(){
+  if(!gWorldStates || !projection) return;
+  gWorldStates.selectAll('.ws-ev').remove();
+  const tip = document.getElementById('zone-tip');
+
+  worldStatesData.forEach(ws=>{
+    const sid = ws.state_id || ws.id || '';
+    // Chercher dans le mapping direct, puis par substring
+    let cfg = WORLD_STATE_MAP[sid];
+    if(!cfg){
+      const k = Object.keys(WORLD_STATE_MAP).find(k=>sid.toUpperCase().includes(k.replace('_',''))||sid.includes(k));
+      cfg = k ? WORLD_STATE_MAP[k] : null;
+    }
+    if(!cfg) return;
+
+    const proj = projection(cfg.coords);
+    if(!proj) return;
+    const [cx, cy] = proj;
+    if(isNaN(cx)||isNaN(cy)) return;
+
+    const intensity = parseFloat(ws.intensity || 0.5);
+    const r = 5 + intensity * 8;   // 5-13px selon intensité
+    const col = cfg.col;
+
+    const grp = gWorldStates.append('g').attr('class','ws-ev').style('cursor','pointer');
+
+    // Anneau pulsant
+    grp.append('circle')
+      .attr('cx',cx).attr('cy',cy).attr('r',r+3)
+      .attr('fill','none')
+      .attr('stroke',col).attr('stroke-width',0.8).attr('stroke-opacity',0.35);
+    // Point plein
+    grp.append('circle')
+      .attr('cx',cx).attr('cy',cy).attr('r',r)
+      .attr('fill',col).attr('fill-opacity',0.20)
+      .attr('stroke',col).attr('stroke-width',1.2).attr('stroke-opacity',0.8);
+    grp.append('circle')
+      .attr('cx',cx).attr('cy',cy).attr('r',3)
+      .attr('fill',col).attr('fill-opacity',0.95);
+
+    grp.on('mousemove', function(ev){
+      if(!tip) return;
+      tip.innerHTML = '<b style="color:'+col+'">◆ '+(ws.description||sid)+'</b>'
+        +'<br>Intensité : '+(intensity*100).toFixed(0)+'%'
+        +(ws.status ? '<br>Statut : '+ws.status : '')
+        +'<br><span style="color:var(--text3);font-size:6px">WORLD STATE PERSISTANT</span>';
+      tip.style.display='block';
+      tip.style.left=(ev.clientX+14)+'px';
+      tip.style.top=(ev.clientY-10)+'px';
+    }).on('mouseleave',()=>{ if(tip) tip.style.display='none'; });
+  });
+}
 
 function _getCausalCoords(ev){
   if(ev.lat && ev.lon) return [parseFloat(ev.lon), parseFloat(ev.lat)];
@@ -624,7 +703,7 @@ async function loadCausalEvents(){
       console.log('[Causal] response from', url, ':', data);
       const evs = Array.isArray(data) ? data : (data.events || data.detected || []);
       console.log('[Causal] events found:', evs.length);
-      if(!evs.length){ console.warn('[Causal] empty events, trying next url'); continue; }
+      if(!evs.length){ console.log('[Causal] 0 événements sur',url,'— pas affiché'); continue; }
       // Diagnostic: combien ont des coords ?
       const withCoords = evs.filter(e=>_getCausalCoords(e));
       console.log('[Causal] with coords:', withCoords.length, '/', evs.length);
@@ -869,10 +948,19 @@ function renderMaritimeAlerts(){
   });
   items.sort((a,b)=>b.score-a.score);
 
-  if(!items.length){
-    el.innerHTML='<div style="padding:10px 12px;font-family:var(--mono);font-size:7px;color:var(--text3)">Aucune anomalie détectée</div>';
-    if(geo) geo.textContent='';
-    return;
+  // Vérifier si la majorité des zones sont en calibration
+  const allZones = [...new Set([...Object.keys(mZones),...Object.keys(fZones)])];
+  const calCount = allZones.filter(z=>(mZones[z]||{}).status==='CALIBRATION'||(mZones[z]||{}).status==='NO_DATA').length;
+  const inCalibration = allZones.length > 0 && calCount >= allZones.length * 0.7;
+
+  if(!items.length || inCalibration){
+    const msg = inCalibration
+      ? '⏳ Calibration en cours<br><span style="font-size:6px;color:var(--text3)">Données AIS insuffisantes — baseline établie après 7 jours</span>'
+      : 'Aucune anomalie significative';
+    el.innerHTML='<div style="padding:10px 12px;font-family:var(--mono);font-size:7px;color:var(--text3);line-height:1.7">'+msg+'</div>';
+    if(geo && inCalibration){ geo.style.color='#555'; geo.textContent='CAL.'; }
+    else if(geo) geo.textContent='';
+    if(!inCalibration) return;
   }
 
   el.innerHTML = items.map(it=>{
@@ -990,8 +1078,9 @@ function initMap(){
   svg=d3.select('#map-svg').attr('width',mapW).attr('height',mapH);
   gBg=svg.append('g');g=svg.append('g');
   gCountries=g.append('g');gConns=g.append('g');
-  gZones=g.append('g').attr('id','g-zones');    // couche zones maritime/aérien
-  gCausal=g.append('g').attr('id','g-causal'); // couche événements causaux IA
+  gZones=g.append('g').attr('id','g-zones');       // zones maritime/aérien
+  gWorldStates=g.append('g').attr('id','g-ws');    // world states persistants
+  gCausal=g.append('g').attr('id','g-causal');     // événements causaux IA
   gMarkers=g.append('g');
   gBg.append('rect').attr('width',mapW).attr('height',mapH).attr('fill','#181818');
   projection=d3.geoNaturalEarth1().scale(mapW/6.4).translate([mapW/2,mapH/2]);
@@ -1004,8 +1093,9 @@ function initMap(){
     gCountries.append('path').datum(topo.mesh(world,world.objects.countries,(a,b)=>a!==b))
       .attr('fill','none').attr('stroke','#363636').attr('stroke-width',.5).attr('d',path);
     renderMarkers();renderList();
-    loadMaritimeData();   // premier chargement maritime après les pays
-    loadCausalEvents();   // événements causaux IA
+    loadMaritimeData();   // maritime/aérien
+    loadWorldStates();    // world states persistants (points colorés)
+    loadCausalEvents();   // événements causaux IA (si disponibles)
   });
   const wrap2=document.getElementById('map-wrap');
   wrap2.addEventListener('mousedown',e=>{
