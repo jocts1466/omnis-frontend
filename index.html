@@ -144,6 +144,39 @@ nav{
   letter-spacing:1px;z-index:50;pointer-events:none;
 }
 
+/* Maritime / Aerial overlay */
+.mf-wrap{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;gap:4px}
+.mf-btn{
+  flex:1;padding:4px 5px;border-radius:3px;border:1px solid var(--border);
+  background:var(--s2);font-family:var(--mono);font-size:7px;color:var(--text3);
+  cursor:pointer;transition:all .15s;text-align:center;white-space:nowrap;
+}
+.mf-btn.on{background:rgba(40,120,180,.15);border-color:#2878b4;color:#4a9eff}
+.live-badge{
+  position:absolute;top:8px;right:46px;
+  background:rgba(20,50,20,.9);border:1px solid #3d8b3d;border-radius:3px;
+  padding:3px 9px;font-family:var(--mono);font-size:6px;color:#3dd68c;
+  letter-spacing:1px;z-index:50;pointer-events:none;display:none;
+}
+.live-badge.stale{background:rgba(60,30,10,.9);border-color:#8b5a2b;color:#c88a3d}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.live-badge .dot{display:inline-block;width:4px;height:4px;border-radius:50%;
+  background:currentColor;margin-right:4px;animation:blink 1.4s infinite}
+.zone-tip{
+  position:fixed;display:none;background:rgba(8,12,18,.97);
+  border:1px solid var(--border2);border-radius:4px;
+  padding:8px 11px;font-family:var(--mono);font-size:7px;color:var(--text2);
+  pointer-events:none;z-index:500;min-width:160px;line-height:1.8;
+}
+.mal-section{border-top:1px solid var(--border);overflow-y:auto;max-height:280px}
+.mal-item{
+  padding:6px 10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:7px;
+}
+.mal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.mal-name{font-size:9px;color:var(--text2);flex:1}
+.mal-tag{font-family:var(--mono);font-size:6px;letter-spacing:.5px}
+
 /* Right detail panel */
 .right{
   width:260px;background:var(--s1);border-left:1px solid var(--border);
@@ -211,11 +244,18 @@ nav{
         <option value="RESSOURCES">Ressources</option>
       </select>
     </div>
+    <div class="mf-wrap">
+      <div class="mf-btn on" id="mf-boats"  onclick="toggleMF('boats')"  >🚢 Bateaux</div>
+      <div class="mf-btn on" id="mf-planes" onclick="toggleMF('planes')" >✈️ Avions</div>
+      <div class="mf-btn on" id="mf-alerts" onclick="toggleMF('alerts')" >⚠️ Alertes</div>
+    </div>
     <div class="evlist" id="evlist"></div>
   </div>
   <div class="map-wrap" id="map-wrap">
     <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="hint">GLISSER · SCROLL POUR ZOOMER · CLIQUER SUR UN POINT</div>
+    <div id="live-badge" class="live-badge"><span class="dot"></span>LIVE</div>
+    <div id="zone-tip" class="zone-tip"></div>
     <div class="map-controls">
       <div class="ctrl-btn" onclick="zoomIn()">+</div>
       <div class="ctrl-btn" onclick="zoomOut()">−</div>
@@ -235,8 +275,13 @@ nav{
       <div class="leg-i"><div class="leg-d" style="background:#289650"></div>RESSOURCES</div>
     </div>
   </div>
-  <div class="right">
-    <div class="panel-title">// ANALYSE</div>
+  <div class="right" style="display:flex;flex-direction:column">
+    <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>// MARITIME &amp; AÉRIEN</span>
+      <span id="geo-score-badge" style="font-size:6px;letter-spacing:1px;color:var(--text3)"></span>
+    </div>
+    <div id="maritime-alerts" class="mal-section"></div>
+    <div class="panel-title" style="margin-top:0">// ANALYSE</div>
     <div class="r-empty" id="r-empty">
       <div class="r-empty-icon">◎</div>
       <div class="r-empty-txt">CLIQUER SUR<br>UN ÉVÉNEMENT</div>
@@ -531,12 +576,185 @@ setInterval(()=>{
   document.getElementById('clock').textContent=n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' UTC';
 },1000);
 
+// Refresh maritime/aérien toutes les 10 min + mise à jour badge
+setInterval(()=>{ loadMaritimeData(); }, 10*60*1000);
+setInterval(()=>{ updateLiveBadge(); },     60*1000);
+
 /* ══ MAP ══ */
 let activeFilter='ALL',currentEvId=null;
-let svg,g,gBg,gCountries,gConns,gMarkers;
+let svg,g,gBg,gCountries,gConns,gMarkers,gZones;
 let scale=1,tx=0,ty=0,mapW,mapH;
 let isDragging=false,dragStart={x:0,y:0,tx:0,ty:0};
 let projection;
+
+/* ── Maritime / Aerial state ── */
+let maritimeData=null, flightData=null, lastMaritimeTs=0;
+let showBoats=true, showPlanes=true, showAlerts=true;
+
+// Centres [lon, lat] des 16 zones (ordre d3 = [lon, lat])
+const ZONE_CENTERS = {
+  Z01:[56.5,26.5], Z02:[32.5,30.3], Z03:[43.5,12.5], Z04:[52.5,26.0],
+  Z05:[38.5,20.0], Z06:[32.5,34.0], Z07:[34.0,43.0], Z08:[-5.5,36.0],
+  Z09:[103.5,2.5], Z10:[114.0,14.0],Z11:[65.0,17.0], Z12:[48.0,12.0],
+  Z13:[18.5,-34.0],Z14:[3.0,56.0],  Z15:[20.0,59.0], Z16:[-90.0,24.0],
+};
+
+function _zoneColor(score){
+  if(score<0.3)return '#3dd68c';
+  if(score<0.7)return '#e09030';
+  return '#e05252';
+}
+
+function toggleMF(layer){
+  if(layer==='boats') {showBoats=!showBoats;document.getElementById('mf-boats').classList.toggle('on',showBoats);}
+  if(layer==='planes'){showPlanes=!showPlanes;document.getElementById('mf-planes').classList.toggle('on',showPlanes);}
+  if(layer==='alerts'){showAlerts=!showAlerts;document.getElementById('mf-alerts').classList.toggle('on',showAlerts);}
+  renderZones();
+}
+
+async function loadMaritimeData(){
+  try{
+    const [mResp, fResp] = await Promise.all([
+      fetch(API_BASE+'/api/maritime/metrics',{signal:AbortSignal.timeout(20000)}),
+      fetch(API_BASE+'/api/flights/zones',   {signal:AbortSignal.timeout(20000)}),
+    ]);
+    if(mResp.ok) maritimeData = await mResp.json();
+    if(fResp.ok) flightData   = await fResp.json();
+    lastMaritimeTs = Date.now();
+    updateLiveBadge();
+    renderZones();
+    renderMaritimeAlerts();
+  } catch(e){ console.warn('[Maritime]',e); }
+}
+
+function updateLiveBadge(){
+  const badge = document.getElementById('live-badge');
+  if(!badge) return;
+  if(!lastMaritimeTs){ badge.style.display='none'; return; }
+  badge.style.display = 'block';
+  const ageMin = (Date.now()-lastMaritimeTs)/60000;
+  const stale  = ageMin > 15;
+  badge.className = 'live-badge' + (stale?' stale':'');
+  badge.innerHTML = '<span class="dot"></span>' + (stale ? Math.round(ageMin)+'MIN' : 'LIVE');
+}
+
+function renderZones(){
+  if(!gZones || !projection) return;
+  gZones.selectAll('*').remove();
+  if(!maritimeData && !flightData) return;
+
+  const mZones = (maritimeData && maritimeData.zones) ? maritimeData.zones : {};
+  const fZones = (flightData  && flightData.zones)   ? flightData.zones   : {};
+  const allZids = new Set([...Object.keys(mZones), ...Object.keys(fZones)]);
+
+  const tip = document.getElementById('zone-tip');
+
+  allZids.forEach(zid => {
+    const center = ZONE_CENTERS[zid];
+    if(!center) return;
+    const [cx,cy] = projection(center) || [null,null];
+    if(cx==null || isNaN(cx)) return;
+
+    const mz = mZones[zid] || {};
+    const fz = fZones[zid] || {};
+
+    const showM = showBoats  && mz.total > 0;
+    const showF = showPlanes && fz.total > 0;
+    if(!showM && !showF) return;
+
+    const score = Math.max(mz.anomaly_score||0, fz.anomaly_score||0);
+    const total = (mz.total||0) + (fz.total||0);
+    const r     = Math.min(8 + total * 0.08, 30);
+    const col   = _zoneColor(score);
+
+    if(!showAlerts && score >= 0.3) return;
+
+    const group = gZones.append('g').style('cursor','pointer');
+
+    group.append('circle')
+      .attr('cx', cx).attr('cy', cy).attr('r', r)
+      .attr('fill', col).attr('fill-opacity', 0.18)
+      .attr('stroke', col).attr('stroke-width', 1.2).attr('stroke-opacity', 0.7);
+
+    // Icône centrale
+    const icon = showM && showF ? '⚓✈' : showM ? '⚓' : '✈';
+    group.append('text')
+      .attr('x', cx).attr('y', cy+3)
+      .attr('text-anchor','middle').attr('font-size', Math.min(r*0.7, 11))
+      .attr('fill', col).attr('opacity', 0.9)
+      .text(icon.slice(0,1));
+
+    group.on('mousemove', function(event){
+      if(!tip) return;
+      const lines = [
+        '<b style="color:'+col+'">'+( mz.name||fz.name||zid )+'</b>',
+        showM ? '🚢 '+( mz.total||0 )+' bateaux · '+( mz.military||0 )+' mil' : null,
+        showF ? '✈️ '+( fz.total||0 )+' avions · '+( fz.military||0 )+' mil' : null,
+        'Score : '+(score*100).toFixed(0)+'%',
+        score>=0.7 ? '<span style="color:#e05252">⚠ ALERTE</span>'
+          : score>=0.3 ? '<span style="color:#e09030">! ATTENTION</span>'
+          : '<span style="color:#3dd68c">✓ NORMAL</span>',
+      ].filter(Boolean).join('<br>');
+      tip.innerHTML = lines;
+      tip.style.display = 'block';
+      tip.style.left  = (event.clientX+14)+'px';
+      tip.style.top   = (event.clientY-10)+'px';
+    })
+    .on('mouseleave', ()=>{ if(tip) tip.style.display='none'; });
+  });
+}
+
+function renderMaritimeAlerts(){
+  const el  = document.getElementById('maritime-alerts');
+  const geo = document.getElementById('geo-score-badge');
+  if(!el) return;
+
+  const mZones = (maritimeData && maritimeData.zones) ? maritimeData.zones : {};
+  const fZones = (flightData  && flightData.zones)   ? flightData.zones   : {};
+
+  // Fusionner et trier par score
+  const items = [];
+  const allZ  = new Set([...Object.keys(mZones),...Object.keys(fZones)]);
+  allZ.forEach(zid=>{
+    const mz = mZones[zid]||{}; const fz = fZones[zid]||{};
+    const score = Math.max(mz.anomaly_score||0, fz.anomaly_score||0);
+    if(score < 0.15) return;
+    items.push({zid, name: mz.name||fz.name||zid,
+      mTotal:mz.total||0, fTotal:fz.total||0,
+      mMil:mz.military||0, fMil:fz.military||0, score});
+  });
+  items.sort((a,b)=>b.score-a.score);
+
+  if(!items.length){
+    el.innerHTML='<div style="padding:10px 12px;font-family:var(--mono);font-size:7px;color:var(--text3)">Aucune anomalie détectée</div>';
+    if(geo) geo.textContent='';
+    return;
+  }
+
+  el.innerHTML = items.map(it=>{
+    const col  = _zoneColor(it.score);
+    const tag  = it.score>=0.7 ? 'ALERTE' : 'WATCH';
+    const parts = [];
+    if(it.mTotal) parts.push('🚢 '+it.mTotal+(it.mMil?' ('+it.mMil+' mil)':''));
+    if(it.fTotal) parts.push('✈️ '+it.fTotal+(it.fMil?' ('+it.fMil+' mil)':''));
+    return '<div class="mal-item">'
+      +'<div class="mal-dot" style="background:'+col+'"></div>'
+      +'<div class="mal-name">'+it.name+'<br>'
+      +'<span style="color:var(--text3);font-size:6px">'+parts.join(' · ')+'</span></div>'
+      +'<div class="mal-tag" style="color:'+col+'">'+tag+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Score global combiné
+  const mScore = maritimeData ? (maritimeData.score||0) : 0;
+  const fScore = flightData   ? (flightData.score  ||0) : 0;
+  const combined = (mScore*0.6 + fScore*0.4);
+  if(geo){
+    const gcol = _zoneColor(combined);
+    geo.style.color = gcol;
+    geo.textContent = 'GEO '+(combined*100).toFixed(0)+'%';
+  }
+}
 
 function filterEvs(v){activeFilter=v;renderList();renderMarkers();}
 
@@ -623,7 +841,9 @@ function initMap(){
   mapW=wrap.clientWidth;mapH=wrap.clientHeight;
   svg=d3.select('#map-svg').attr('width',mapW).attr('height',mapH);
   gBg=svg.append('g');g=svg.append('g');
-  gCountries=g.append('g');gConns=g.append('g');gMarkers=g.append('g');
+  gCountries=g.append('g');gConns=g.append('g');
+  gZones=g.append('g').attr('id','g-zones');   // couche zones maritime/aérien
+  gMarkers=g.append('g');
   gBg.append('rect').attr('width',mapW).attr('height',mapH).attr('fill','#181818');
   projection=d3.geoNaturalEarth1().scale(mapW/6.4).translate([mapW/2,mapH/2]);
   const path=d3.geoPath().projection(projection);
@@ -635,6 +855,7 @@ function initMap(){
     gCountries.append('path').datum(topo.mesh(world,world.objects.countries,(a,b)=>a!==b))
       .attr('fill','none').attr('stroke','#363636').attr('stroke-width',.5).attr('d',path);
     renderMarkers();renderList();
+    loadMaritimeData();  // premier chargement maritime après les pays
   });
   const wrap2=document.getElementById('map-wrap');
   wrap2.addEventListener('mousedown',e=>{
