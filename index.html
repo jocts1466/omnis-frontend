@@ -222,13 +222,18 @@ nav{
   <button class="nav-tab" onclick="switchTab('news',this)">NEWS</button>
   <button class="nav-tab" onclick="switchTab('calendrier',this)">CALENDRIER</button>
   <button class="nav-tab" onclick="switchTab('portfolio',this)">FAVORIS</button>
-  <div class="nav-right" style="display:flex;align-items:center;gap:10px">
-    <button onclick="openAlertModal()" title="Activer les alertes email"
-      style="background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.25);border-radius:4px;
-             color:#4a9eff;font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
-             letter-spacing:1px;transition:all .15s"
-      onmouseover="this.style.background='rgba(74,158,255,.15)'"
-      onmouseout="this.style.background='rgba(74,158,255,.08)'">🔔 ALERTES</button>
+  <div style="width:1px;background:var(--border);margin:6px 4px;align-self:stretch"></div>
+  <button onclick="openAlertModal()"
+    style="display:flex;align-items:center;gap:5px;background:rgba(74,158,255,.1);
+           border:1px solid rgba(74,158,255,.3);border-radius:4px;
+           color:#4a9eff;font-family:var(--mono);font-size:8px;cursor:pointer;
+           padding:5px 12px;letter-spacing:1px;white-space:nowrap;transition:all .15s;
+           margin:0 4px"
+    onmouseover="this.style.background='rgba(74,158,255,.2)'"
+    onmouseout="this.style.background='rgba(74,158,255,.1)'">
+    🔔 <span>ALERTES</span>
+  </button>
+  <div class="nav-right">
     <div class="nav-time" id="clock"></div>
   </div>
 </nav>
