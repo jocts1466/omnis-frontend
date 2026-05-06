@@ -802,9 +802,6 @@ async function doLogin(){
       localStorage.setItem('omnis_token', d.token);
       localStorage.setItem('omnis_user',  JSON.stringify(d.user));
       console.log('[LOGIN] Token sauvegardé:', d.token.substring(0,20)+'...');
-      // Recharger l'iframe predictions avec le token dans l'URL
-      const _pif = document.getElementById('predictions-iframe');
-      if(_pif) _pif.src = 'predictions.html?token=' + encodeURIComponent(d.token);
       _currentUser=d.user;
       _updateAuthUI();
       closeModal('login-modal');
@@ -980,13 +977,6 @@ async function openBillingPortal(){
       }
     }, 3000);
   }
-})();
-
-// Initialiser l'URL de l'iframe predictions avec le token dès le chargement
-(function initPredictionsIframe(){
-  const tok = localStorage.getItem('omnis_token');
-  const iframe = document.getElementById('predictions-iframe');
-  if(iframe && tok) iframe.src = 'predictions.html?token=' + encodeURIComponent(tok);
 })();
 
 document.addEventListener('keydown',e=>{

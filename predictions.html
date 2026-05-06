@@ -808,13 +808,6 @@ async function renderPredHistory(symbol) {
 // ── Fetch ─────────────────────────────────────────────────────
 
 function _getToken() {
-  // 1. Token dans l'URL ?token=... (passé par index.html)
-  const urlToken = new URLSearchParams(window.location.search).get('token');
-  if (urlToken) {
-    localStorage.setItem('omnis_token', urlToken);  // persister pour les appels suivants
-    return urlToken;
-  }
-  // 2. Fallback localStorage
   return localStorage.getItem('omnis_token') || '';
 }
 
@@ -823,8 +816,8 @@ async function loadSignals() {
   document.getElementById('loading-text').textContent = L('loading');
   try {
     const token = _getToken();
-    const headers = token ? {'Authorization': 'Bearer ' + token} : {};
-    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`, {headers});
+    const tokenParam = token ? '&token=' + encodeURIComponent(token) : '';
+    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false${tokenParam}`);
     const data = await res.json();
     allSignals = data.signals || [];
     document.getElementById('last-update').textContent = data.updated || '—';
