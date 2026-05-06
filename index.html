@@ -1266,10 +1266,9 @@ function authFetch(url, options = {}) {
 function fetchWithTimeout(url, ms){
   const ctrl = new AbortController();
   const id   = setTimeout(()=>ctrl.abort(), ms);
-  // Inclut le token JWT pour les endpoints protégés (maritime, flights)
   const token = localStorage.getItem('omnis_token');
   const headers = token ? {'Authorization': 'Bearer ' + token} : {};
-  return fetch(API_BASE+url, {signal:ctrl.signal, headers}).finally(()=>clearTimeout(id));
+  return fetch(API_BASE+url, {signal:ctrl.signal, headers:headers}).finally(()=>clearTimeout(id));
 }
 
 function _debugPanel(){
