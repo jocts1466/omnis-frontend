@@ -932,26 +932,49 @@ async function openBillingPortal(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('payment')==='success'){
     history.replaceState({},'',window.location.pathname);
-    // Attendre 3s que le webhook Stripe soit traité, puis rafraîchir le profil
-    setTimeout(async ()=>{
+    // Afficher un toast intermédiaire pendant l'activation
+    const toastEl=document.getElementById('payment-toast');
+    const toastMsg=toastEl?.querySelector('div > div:first-child');
+    if(toastEl){
+      if(toastMsg) toastMsg.textContent='Paiement reçu — activation en cours…';
+      toastEl.style.display='flex';
+    }
+
+    async function _refreshPremiumProfile(){
       const tok=localStorage.getItem('omnis_token');
-      if(tok){
-        try{
-          const r=await fetch(API_BASE+'/api/auth/me',{
-            headers:{Authorization:'Bearer '+tok},
-            signal:AbortSignal.timeout(8000),
-          });
-          if(r.ok){
-            const user=await r.json();
-            localStorage.setItem('omnis_user',JSON.stringify(user));
-            _currentUser=user;
-            _updateAuthUI();
-            console.log('[PAYMENT] Plan mis à jour:',user.plan);
-          }
-        } catch(e){ console.warn('[PAYMENT] Refresh profil échoué:',e); }
+      if(!tok) return false;
+      try{
+        const r=await fetch(API_BASE+'/api/auth/me',{
+          headers:{Authorization:'Bearer '+tok},
+          signal:AbortSignal.timeout(8000),
+        });
+        if(!r.ok) return false;
+        const user=await r.json();
+        console.log('[PAYMENT] Profil rechargé:',user);
+        localStorage.setItem('omnis_user',JSON.stringify(user));
+        _currentUser=user;
+        _updateAuthUI();
+        return user.plan==='premium';
+      } catch(e){ console.warn('[PAYMENT] Refresh échoué:',e); return false; }
+    }
+
+    // Tentative 1 — après 3s
+    setTimeout(async ()=>{
+      const isPremium=await _refreshPremiumProfile();
+      if(isPremium){
+        if(toastMsg) toastMsg.textContent='Bienvenue dans OMNIS Premium !';
+        setTimeout(()=>{ if(toastEl) toastEl.style.display='none'; },6000);
+      } else {
+        // Tentative 2 — après 3s supplémentaires (webhook peut être lent)
+        console.log('[PAYMENT] Plan encore free, retry dans 3s…');
+        setTimeout(async ()=>{
+          const isPremium2=await _refreshPremiumProfile();
+          if(toastMsg) toastMsg.textContent=isPremium2
+            ? 'Bienvenue dans OMNIS Premium !'
+            : 'Paiement reçu — votre accès sera activé dans quelques instants.';
+          setTimeout(()=>{ if(toastEl) toastEl.style.display='none'; },6000);
+        }, 3000);
       }
-      const toast=document.getElementById('payment-toast');
-      if(toast){ toast.style.display='flex'; setTimeout(()=>toast.style.display='none',6000); }
     }, 3000);
   }
 })();
