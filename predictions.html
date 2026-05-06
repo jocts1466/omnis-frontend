@@ -807,11 +807,27 @@ async function renderPredHistory(symbol) {
 
 // ── Fetch ─────────────────────────────────────────────────────
 
+function _getToken() {
+  // Token depuis localStorage direct ou hérité du parent via postMessage
+  return localStorage.getItem('omnis_token') || '';
+}
+
+// Écouter le token transmis par l'iframe parent (index.html)
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'auth_token' && e.data.token) {
+    localStorage.setItem('omnis_token', e.data.token);
+    console.log('[PREDICTIONS] Token reçu du parent, rechargement des signaux');
+    loadSignals();
+  }
+});
+
 async function loadSignals() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('loading-text').textContent = L('loading');
   try {
-    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`);
+    const token = _getToken();
+    const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`, {headers});
     const data = await res.json();
     allSignals = data.signals || [];
     document.getElementById('last-update').textContent = data.updated || '—';
