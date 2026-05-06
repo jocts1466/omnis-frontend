@@ -801,6 +801,7 @@ async function doLogin(){
     if(d.token){
       localStorage.setItem('omnis_token', d.token);
       localStorage.setItem('omnis_user',  JSON.stringify(d.user));
+      console.log('[LOGIN] Token sauvegardé:', d.token.substring(0,20)+'...');
       _currentUser=d.user;
       _updateAuthUI();
       closeModal('login-modal');
@@ -853,12 +854,16 @@ async function doLogout(){
 
 // ── Stripe ─────────────────────────────────────────────────────────────────
 async function startCheckout(){
-  const token = localStorage.getItem('omnis_token');
+  const token = localStorage.getItem('omnis_token')
+             || localStorage.getItem('token')
+             || localStorage.getItem('jwt');
+  console.log('[CHECKOUT] Token trouvé:', token ? token.substring(0,20)+'...' : 'AUCUN');
+  console.log('[CHECKOUT] Toutes les clés localStorage:', Object.keys(localStorage));
   if(!token){ openLoginModal(); return; }
   const btn=document.getElementById('checkout-btn');
   const resetBtn = ()=>{ if(btn){btn.disabled=false;btn.textContent="S'abonner — 5€/mois";} };
   if(btn){btn.disabled=true;btn.textContent='Chargement...';}
-  console.log('[CHECKOUT] token présent, appel API:', API_BASE);
+  console.log('[CHECKOUT] Appel API:', API_BASE);
   try{
     const ctrl = new AbortController();
     const timeout = setTimeout(()=>ctrl.abort(), 20000);   // 20s timeout
@@ -900,9 +905,10 @@ async function openBillingPortal(){
 
 // ── Init session au chargement ─────────────────────────────────────────────
 (async function initAuth(){
+  const tok = _tok();
+  console.log('[INIT] Token en localStorage:', tok ? 'OUI ('+tok.substring(0,15)+'...)' : 'NON');
   // 1. Lecture cache localStorage (affichage immédiat sans attendre l'API)
   const cachedUser = JSON.parse(localStorage.getItem('omnis_user') || 'null');
-  const tok = _tok();
   if(cachedUser && tok){ _currentUser=cachedUser; _updateAuthUI(); }
 
   // 2. Vérification API en arrière-plan
