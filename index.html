@@ -932,26 +932,49 @@ async function openBillingPortal(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('payment')==='success'){
     history.replaceState({},'',window.location.pathname);
-    // Attendre 3s que le webhook Stripe soit traité, puis rafraîchir le profil
-    setTimeout(async ()=>{
+    // Afficher un toast intermédiaire pendant l'activation
+    const toastEl=document.getElementById('payment-toast');
+    const toastMsg=toastEl?.querySelector('div > div:first-child');
+    if(toastEl){
+      if(toastMsg) toastMsg.textContent='Paiement reçu — activation en cours…';
+      toastEl.style.display='flex';
+    }
+
+    async function _refreshPremiumProfile(){
       const tok=localStorage.getItem('omnis_token');
-      if(tok){
-        try{
-          const r=await fetch(API_BASE+'/api/auth/me',{
-            headers:{Authorization:'Bearer '+tok},
-            signal:AbortSignal.timeout(8000),
-          });
-          if(r.ok){
-            const user=await r.json();
-            localStorage.setItem('omnis_user',JSON.stringify(user));
-            _currentUser=user;
-            _updateAuthUI();
-            console.log('[PAYMENT] Plan mis à jour:',user.plan);
-          }
-        } catch(e){ console.warn('[PAYMENT] Refresh profil échoué:',e); }
+      if(!tok) return false;
+      try{
+        const r=await fetch(API_BASE+'/api/auth/me',{
+          headers:{Authorization:'Bearer '+tok},
+          signal:AbortSignal.timeout(8000),
+        });
+        if(!r.ok) return false;
+        const user=await r.json();
+        console.log('[PAYMENT] Profil rechargé:',user);
+        localStorage.setItem('omnis_user',JSON.stringify(user));
+        _currentUser=user;
+        _updateAuthUI();
+        return user.plan==='premium';
+      } catch(e){ console.warn('[PAYMENT] Refresh échoué:',e); return false; }
+    }
+
+    // Tentative 1 — après 3s
+    setTimeout(async ()=>{
+      const isPremium=await _refreshPremiumProfile();
+      if(isPremium){
+        if(toastMsg) toastMsg.textContent='Bienvenue dans OMNIS Premium !';
+        setTimeout(()=>{ if(toastEl) toastEl.style.display='none'; },6000);
+      } else {
+        // Tentative 2 — après 3s supplémentaires (webhook peut être lent)
+        console.log('[PAYMENT] Plan encore free, retry dans 3s…');
+        setTimeout(async ()=>{
+          const isPremium2=await _refreshPremiumProfile();
+          if(toastMsg) toastMsg.textContent=isPremium2
+            ? 'Bienvenue dans OMNIS Premium !'
+            : 'Paiement reçu — votre accès sera activé dans quelques instants.';
+          setTimeout(()=>{ if(toastEl) toastEl.style.display='none'; },6000);
+        }, 3000);
       }
-      const toast=document.getElementById('payment-toast');
-      if(toast){ toast.style.display='flex'; setTimeout(()=>toast.style.display='none',6000); }
     }, 3000);
   }
 })();
@@ -1035,7 +1058,7 @@ const WORLD_STATE_MAP = {
 
 async function loadWorldStates(){
   try{
-    const resp = await fetch(API_BASE+'/api/world/states',
+    const resp = await authFetch('/api/world/states',
                              {signal:AbortSignal.timeout(10000)});
     if(!resp.ok) return;
     const data = await resp.json();
@@ -1111,8 +1134,8 @@ function _getCausalCoords(ev){
 
 async function loadCausalEvents(){
   const urls = [
-    API_BASE+'/api/causal/events',      // plus fiable, basé sur cache news
-    API_BASE+'/api/causal/ai/events',   // nécessite Claude API
+    authFetch('/api/causal/events',      // plus fiable, basé sur cache news
+    authFetch('/api/causal/ai/events',   // nécessite Claude API
   ];
   for(const url of urls){
     try{
@@ -1222,10 +1245,24 @@ function toggleMF(layer){
 
 function _mapDebug(html){ const el=document.getElementById('map-debug'); if(el){el.style.display='block';el.innerHTML=html;} }
 
+// Helper global : ajoute automatiquement le JWT à tous les appels API
+function authFetch(url, options = {}){
+  const token = localStorage.getItem('omnis_token');
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? {'Authorization': 'Bearer ' + token} : {}),
+  };
+  const fullUrl = url.startsWith('http') ? url : API_BASE + url;
+  return fetch(fullUrl, {...options, headers});
+}
+
 function fetchWithTimeout(url, ms){
   const ctrl = new AbortController();
   const id   = setTimeout(()=>ctrl.abort(), ms);
-  return fetch(API_BASE+url, {signal:ctrl.signal}).finally(()=>clearTimeout(id));
+  // Inclut le token JWT pour les endpoints protégés (maritime, flights)
+  const token = localStorage.getItem('omnis_token');
+  const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+  return fetch(API_BASE+url, {signal:ctrl.signal, headers}).finally(()=>clearTimeout(id));
 }
 
 function _debugPanel(){
@@ -1626,7 +1663,7 @@ async function initAnalyse() {
   try {
     // 1. Backtest
     if (status) status.textContent = 'Chargement backtest...';
-    const btResp = await fetch(API_BASE + '/api/backtest', {signal: AbortSignal.timeout(10000)});
+    const btResp = await authFetch('/api/backtest', {signal: AbortSignal.timeout(10000)});
     if (btResp.ok) {
       const bt = await btResp.json();
       testEl('an-brent-prix', '$' + (bt.brent_actuel || '?'));
@@ -1642,7 +1679,7 @@ async function initAnalyse() {
     
     // 2. ML predict
     if (status) status.textContent = 'Chargement ML...';
-    const mlResp = await fetch(API_BASE + '/api/ml/predict', {signal: AbortSignal.timeout(35000)});
+    const mlResp = await authFetch('/api/ml/predict', {signal: AbortSignal.timeout(35000)});
     if (mlResp.ok) {
       const ml = await mlResp.json();
       if (!ml.error) {
@@ -1661,7 +1698,7 @@ async function initAnalyse() {
     
     // 3. Predict brent
     if (status) status.textContent = 'Chargement prédictions...';
-    const predResp = await fetch(API_BASE + '/api/predict/brent', {signal: AbortSignal.timeout(25000)});
+    const predResp = await authFetch('/api/predict/brent', {signal: AbortSignal.timeout(25000)});
     if (predResp.ok) {
       const pred = await predResp.json();
       if (pred.predictions) {
@@ -1702,7 +1739,7 @@ function reloadAnalyse() {
 
 async function loadMLTrain() {
   try {
-    const resp = await fetch(`${API_BASE}/api/ml/train`, {signal: AbortSignal.timeout(30000)});
+    const resp = await authFetch(`/api/ml/train`, {signal: AbortSignal.timeout(30000)});
     if (!resp.ok) return;
     const ml = await resp.json();
     if (ml.error) return;
@@ -1738,9 +1775,9 @@ async function loadPrediction() {
   window._lastPredData = null; window._lastBtData = null; window._lastMlData = null;
   try {
     const [predResp, btResp, mlResp] = await Promise.all([
-      fetch(`${API_BASE}/api/predict/brent`, {signal: AbortSignal.timeout(25000)}),
-      fetch(`${API_BASE}/api/backtest`,      {signal: AbortSignal.timeout(10000)}),
-      fetch(`${API_BASE}/api/ml/predict`,    {signal: AbortSignal.timeout(30000)}),
+      authFetch(`/api/predict/brent`, {signal: AbortSignal.timeout(25000)}),
+      authFetch(`/api/backtest`,      {signal: AbortSignal.timeout(10000)}),
+      authFetch(`/api/ml/predict`,    {signal: AbortSignal.timeout(30000)}),
     ]);
     
     // Prédiction linéaire J+1/J+3/J+7
@@ -1861,7 +1898,7 @@ function updateAnalyseView(pred, bt, ml) {
 
 async function loadSignalHistorique() {
   try {
-    const resp = await fetch(`${API_BASE}/api/historique/signal?jours=90`, 
+    const resp = await authFetch(`/api/historique/signal?jours=90`, 
                              {signal: AbortSignal.timeout(10000)});
     if (!resp.ok) return;
     const json = await resp.json();
@@ -2745,7 +2782,7 @@ async function loadCal() {
   list.innerHTML = `<div style="padding:24px;text-align:center;font-family:var(--mono);font-size:7px;color:var(--text3)">Chargement du calendrier économique...</div>`;
 
   try {
-    const resp = await fetch(`${API_BASE}/api/calendrier`, {signal: AbortSignal.timeout(15000)});
+    const resp = await authFetch(`/api/calendrier`, {signal: AbortSignal.timeout(15000)});
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     calData = (data.events || []).filter(ev => ev.title);
@@ -3075,7 +3112,7 @@ ${Object.values(_intel.geo_tensions || {}).slice(0,4).map(d =>
   // Données énergie EIA
   let energieSection = '';
   try {
-    const resp = await fetch(`${API_BASE}/api/energie`, {signal: AbortSignal.timeout(8000)});
+    const resp = await authFetch(`/api/energie`, {signal: AbortSignal.timeout(8000)});
     if (resp.ok) {
       const en = await resp.json();
       const hl = (en.highlights || []).slice(0,4);
@@ -3224,7 +3261,7 @@ async function generateBriefing(){
 
   try{
     const prompt=await buildBriefingPrompt();
-    const resp=await fetch(`${API_BASE}/api/briefing/ia`,{signal:AbortSignal.timeout(35000)});
+    const resp=await authFetch(`/api/briefing/ia`,{signal:AbortSignal.timeout(35000)});
     if(!resp.ok)throw new Error(`Railway ${resp.status}`);
     const data=await resp.json();
     const texte=data.briefing||'';
