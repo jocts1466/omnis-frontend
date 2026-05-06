@@ -807,11 +807,17 @@ async function renderPredHistory(symbol) {
 
 // ── Fetch ─────────────────────────────────────────────────────
 
+function _getToken() {
+  return localStorage.getItem('omnis_token') || '';
+}
+
 async function loadSignals() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('loading-text').textContent = L('loading');
   try {
-    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false`);
+    const token = _getToken();
+    const tokenParam = token ? '&token=' + encodeURIComponent(token) : '';
+    const res  = await fetch(`${API}/api/signal/all?lang=${currentLang}&force=false${tokenParam}`);
     const data = await res.json();
     allSignals = data.signals || [];
     document.getElementById('last-update').textContent = data.updated || '—';

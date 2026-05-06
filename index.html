@@ -694,6 +694,13 @@ function switchTab(id,btn){
   if(id==='calendrier') loadCal();
   if(id==='portfolio')  initPortfolio();
   if(id==='analyse')     initAnalyse();
+  if(id==='map'){
+    setTimeout(()=>{
+      const token=localStorage.getItem('omnis_token');
+      console.log('[MAP] Token disponible:', token ? 'OUI' : 'NON');
+      loadMaritimeData();
+    }, 500);
+  }
 }
 setInterval(()=>{
   const n=new Date();
@@ -1245,6 +1252,18 @@ function toggleMF(layer){
 
 function _mapDebug(html){ const el=document.getElementById('map-debug'); if(el){el.style.display='block';el.innerHTML=html;} }
 
+// Helper : ajoute le JWT sur les endpoints Premium (maritime, flights, signals)
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem('omnis_token');
+  if (token) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + token;
+  }
+  const fullUrl = url.startsWith('http') ? url : API_BASE + url;
+  return fetch(fullUrl, options);
+}
+
+
 function fetchWithTimeout(url, ms){
   const ctrl = new AbortController();
   const id   = setTimeout(()=>ctrl.abort(), ms);
@@ -1261,6 +1280,8 @@ function _debugPanel(){
 }
 
 async function loadMaritimeData(){
+  const token=localStorage.getItem('omnis_token');
+  console.log('[MARITIME] Token:', token ? token.substring(0,20)+'...' : 'ABSENT');
   _mapDebug('⏳ Vols en cours...');
 
   // ── Phase 1 : vols en premier (ADSB.fi, rapide ~2-5s) ──────────
