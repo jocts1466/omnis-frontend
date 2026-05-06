@@ -931,10 +931,28 @@ async function openBillingPortal(){
   // 3. Détecter retour paiement Stripe
   const params=new URLSearchParams(window.location.search);
   if(params.get('payment')==='success'){
-    const toast=document.getElementById('payment-toast');
-    if(toast){ toast.style.display='flex'; setTimeout(()=>toast.style.display='none',5000); }
-    // Nettoyer l'URL
     history.replaceState({},'',window.location.pathname);
+    // Attendre 3s que le webhook Stripe soit traité, puis rafraîchir le profil
+    setTimeout(async ()=>{
+      const tok=localStorage.getItem('omnis_token');
+      if(tok){
+        try{
+          const r=await fetch(API_BASE+'/api/auth/me',{
+            headers:{Authorization:'Bearer '+tok},
+            signal:AbortSignal.timeout(8000),
+          });
+          if(r.ok){
+            const user=await r.json();
+            localStorage.setItem('omnis_user',JSON.stringify(user));
+            _currentUser=user;
+            _updateAuthUI();
+            console.log('[PAYMENT] Plan mis à jour:',user.plan);
+          }
+        } catch(e){ console.warn('[PAYMENT] Refresh profil échoué:',e); }
+      }
+      const toast=document.getElementById('payment-toast');
+      if(toast){ toast.style.display='flex'; setTimeout(()=>toast.style.display='none',6000); }
+    }, 3000);
   }
 })();
 
