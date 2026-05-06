@@ -222,6 +222,7 @@ nav{
   <button class="nav-tab" onclick="switchTab('news',this)">NEWS</button>
   <button class="nav-tab" onclick="switchTab('calendrier',this)">CALENDRIER</button>
   <button class="nav-tab" onclick="switchTab('portfolio',this)">FAVORIS</button>
+  <button class="nav-tab" onclick="switchTab('pricing',this)">PREMIUM</button>
   <div style="width:1px;background:var(--border);margin:6px 4px;align-self:stretch"></div>
   <button onclick="openAlertModal()"
     style="display:flex;align-items:center;gap:5px;background:rgba(74,158,255,.1);
@@ -232,6 +233,31 @@ nav{
     onmouseover="this.style.background='rgba(74,158,255,.2)'"
     onmouseout="this.style.background='rgba(74,158,255,.1)'">
     🔔 <span>ALERTES</span>
+  </button>
+  <!-- Bouton Mon Compte (visible si connecté) -->
+  <button id="nav-compte-tab" onclick="openAccountModal()" style="display:none;align-items:center;gap:6px;
+    background:var(--s2);border:1px solid var(--border);border-radius:4px;
+    color:var(--text2);font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
+    letter-spacing:.5px;transition:all .15s;margin:0 2px"
+    onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">
+    <span id="user-name-nav" style="color:var(--text2)">◈</span>
+    <span id="user-plan-badge" style="font-size:6px;color:#888">Gratuit</span>
+  </button>
+  <!-- Bouton Passer Premium (visible si free) -->
+  <button id="nav-premium-btn" onclick="switchTab('pricing',null)" style="display:none;align-items:center;gap:4px;
+    background:rgba(61,214,140,.1);border:1px solid rgba(61,214,140,.3);border-radius:4px;
+    color:var(--green);font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
+    letter-spacing:.5px;transition:all .15s;margin:0 2px"
+    onmouseover="this.style.background='rgba(61,214,140,.18)'" onmouseout="this.style.background='rgba(61,214,140,.1)'">
+    ⭐ PREMIUM
+  </button>
+  <div id="user-nav" style="display:none"></div><!-- compat -->
+  <button id="login-nav-btn" onclick="openLoginModal()"
+    style="background:var(--s2);border:1px solid var(--border2);border-radius:4px;
+           color:var(--text2);font-family:var(--mono);font-size:7px;cursor:pointer;
+           padding:4px 10px;letter-spacing:1px;transition:all .15s"
+    onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
+    CONNEXION
   </button>
   <div class="nav-right">
     <div class="nav-time" id="clock"></div>
@@ -345,6 +371,7 @@ nav{
     <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="hint">GLISSER · SCROLL POUR ZOOMER · CLIQUER SUR UN POINT</div>
     <div id="live-badge" class="live-badge"><span class="dot"></span>LIVE</div>
+    <div id="map-premium-overlay" style="display:none;position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(8,12,18,.94);border:1px solid #1e2530;border-radius:8px;padding:16px 24px;z-index:100;text-align:center"><div style="font-family:var(--mono);font-size:9px;color:#ccc;margin-bottom:10px">🔒 MAP maritime &amp; aérienne — Premium</div><button onclick="switchTab('pricing',null)" style="background:#2878b4;border:none;border-radius:4px;color:#fff;font-family:var(--mono);font-size:8px;cursor:pointer;padding:7px 16px;letter-spacing:1px;font-weight:700">DÉCOUVRIR PREMIUM</button></div>
     <div id="zone-tip" class="zone-tip"></div>
     <div id="map-debug" style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.82);
          color:#ccc;font-family:monospace;font-size:9px;padding:7px 10px;z-index:1000;
@@ -592,6 +619,55 @@ nav{
   </div>
 </div>
 
+<!-- ══ PRICING ══ -->
+<div class="view" id="view-pricing" style="flex-direction:column;overflow-y:auto;background:var(--bg);padding:40px 24px">
+  <div style="max-width:700px;margin:0 auto;width:100%">
+    <h2 style="font-family:var(--mono);font-size:14px;color:var(--text);letter-spacing:2px;margin:0 0 8px">◈ OMNIS INTELLIGENCE</h2>
+    <p style="font-family:var(--mono);font-size:9px;color:var(--text3);margin:0 0 32px">Choisissez votre niveau d'accès</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- Gratuit -->
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:24px">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:2px;margin-bottom:8px">GRATUIT</div>
+        <div style="font-size:28px;font-weight:700;color:var(--text);margin-bottom:16px">0€</div>
+        <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:11px;color:var(--text2);line-height:2">
+          <li>✓ 3 actifs (OR, BTC, SP500)</li>
+          <li>✓ Signaux basiques</li>
+          <li>✓ Newsletter hebdomadaire</li>
+          <li style="color:var(--text3)">✗ Signaux complets (30 actifs)</li>
+          <li style="color:var(--text3)">✗ Alertes email temps réel</li>
+          <li style="color:var(--text3)">✗ MAP maritime & aérienne</li>
+        </ul>
+        <button onclick="openRegisterModal()"
+          style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--border2);border-radius:4px;
+                 color:var(--text2);font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">
+          COMMENCER GRATUITEMENT
+        </button>
+      </div>
+      <!-- Premium -->
+      <div style="background:var(--s1);border:1px solid #2878b4;border-radius:8px;padding:24px;position:relative">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+          background:#2878b4;color:#fff;font-family:var(--mono);font-size:7px;padding:3px 12px;border-radius:12px;letter-spacing:1px">RECOMMANDÉ</div>
+        <div style="font-family:var(--mono);font-size:8px;color:#4a9eff;letter-spacing:2px;margin-bottom:8px">PREMIUM</div>
+        <div style="font-size:28px;font-weight:700;color:var(--text);margin-bottom:4px">5€<span style="font-size:13px;color:var(--text3)">/mois</span></div>
+        <div style="font-family:var(--mono);font-size:7px;color:var(--text3);margin-bottom:16px">Résiliable à tout moment</div>
+        <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:11px;color:var(--text2);line-height:2">
+          <li style="color:var(--green)">✓ 30 actifs complets</li>
+          <li style="color:var(--green)">✓ Explications causales détaillées</li>
+          <li style="color:var(--green)">✓ Alertes email temps réel</li>
+          <li style="color:var(--green)">✓ MAP maritime & aérienne</li>
+          <li style="color:var(--green)">✓ Historique & précision</li>
+          <li style="color:var(--green)">✓ Newsletter quotidienne</li>
+        </ul>
+        <button onclick="startCheckout()"
+          style="width:100%;padding:10px;background:#2878b4;border:none;border-radius:4px;
+                 color:#fff;font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px;font-weight:700">
+          S'ABONNER — 5€/MOIS →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- .main -->
 </div><!-- #app -->
 
@@ -651,7 +727,7 @@ let EVENTS=[]
 function switchTab(id,btn){
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   // Cacher toutes les vues connues
-  ['map','predictions','marches','briefing','news','calendrier','portfolio'].forEach(v=>{
+  ['map','predictions','marches','briefing','news','calendrier','portfolio','pricing'].forEach(v=>{
     const el=document.getElementById('view-'+v);
     if(el) el.style.display='none';
   });
@@ -673,6 +749,204 @@ setInterval(()=>{
 // Refresh maritime/aérien toutes les 10 min + mise à jour badge
 setInterval(()=>{ loadMaritimeData(); }, 10*60*1000);
 setInterval(()=>{ updateLiveBadge(); },     60*1000);
+
+/* ── Auth & Billing ── */
+/* ══ AUTH & BILLING — système complet ══════════════════════════════════════ */
+let _currentUser = null;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function _tok(){ return localStorage.getItem('omnis_token') || ''; }
+function _authH(){ return _tok() ? {Authorization:'Bearer '+_tok()} : {}; }
+function closeModal(id){ const m=document.getElementById(id); if(m) m.style.display='none'; }
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+function openLoginModal(){
+  closeModal('register-modal');
+  const m=document.getElementById('login-modal');
+  if(m){ m.style.display='flex'; setTimeout(()=>document.getElementById('li-email')?.focus(),100); }
+}
+function openRegisterModal(){
+  closeModal('login-modal');
+  const m=document.getElementById('register-modal');
+  if(m){ m.style.display='flex'; setTimeout(()=>document.getElementById('reg-name')?.focus(),100); }
+}
+function openAccountModal(){
+  const m=document.getElementById('account-modal');
+  if(!m||!_currentUser) return;
+  const isPrem = _currentUser.plan==='premium';
+  document.getElementById('acc-info').innerHTML=
+    `<div style="margin-bottom:4px">👤 <b style="color:#fff">${_currentUser.name||''}</b></div>`+
+    `<div style="color:#666;font-size:9px;margin-bottom:8px">${_currentUser.email}</div>`+
+    `<div style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:8px;font-weight:700;`+
+    `background:${isPrem?'rgba(61,214,140,.12)':'rgba(255,255,255,.06)'};`+
+    `color:${isPrem?'var(--green)':'#888'};border:1px solid ${isPrem?'rgba(61,214,140,.3)':'#333'}">`+
+    `${isPrem?'✦ PREMIUM':'Gratuit'}</div>`;
+  document.getElementById('acc-premium-btn').style.display = isPrem?'none':'block';
+  document.getElementById('acc-portal-btn').style.display  = isPrem?'block':'none';
+  m.style.display='flex';
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────
+function _updateAuthUI(){
+  const loginBtn   = document.getElementById('login-nav-btn');
+  const userNav    = document.getElementById('user-nav');
+  const nameEl     = document.getElementById('user-name-nav');
+  const planBadge  = document.getElementById('user-plan-badge');
+  const premBtn    = document.getElementById('nav-premium-btn');
+  const acctTab    = document.getElementById('nav-compte-tab');
+
+  if(_currentUser){
+    if(loginBtn) loginBtn.style.display='none';
+    if(userNav)  userNav.style.display='flex';
+    const isPrem = _currentUser.plan === 'premium';
+    if(nameEl)    nameEl.textContent = _currentUser.name || _currentUser.email;
+    if(planBadge){
+      planBadge.textContent  = isPrem ? '✦ Premium' : 'Gratuit';
+      planBadge.style.color  = isPrem ? 'var(--green)' : '#888';
+    }
+    if(premBtn)  premBtn.style.display = isPrem ? 'none' : 'inline-flex';
+    if(acctTab)  acctTab.style.display = 'flex';
+    _applyFreeRestrictions(!isPrem);
+  } else {
+    if(loginBtn) loginBtn.style.display='';
+    if(userNav)  userNav.style.display='none';
+    if(premBtn)  premBtn.style.display='none';
+    if(acctTab)  acctTab.style.display='none';
+    _applyFreeRestrictions(true);
+  }
+}
+
+// ── Restrictions plan gratuit ──────────────────────────────────────────────
+function _applyFreeRestrictions(isFree){
+  // MAP : overlay maritime/aérien si gratuit
+  const mapOverlay = document.getElementById('map-premium-overlay');
+  if(mapOverlay) mapOverlay.style.display = isFree ? 'flex' : 'none';
+}
+
+// ── Login ──────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const email = document.getElementById('li-email')?.value?.trim();
+  const pass  = document.getElementById('li-pass')?.value;
+  const msg   = document.getElementById('li-msg');
+  const btn   = document.getElementById('li-btn');
+  if(!email||!pass){ if(msg){msg.style.display='block';msg.style.color='#e05252';msg.textContent='Email et mot de passe requis.';} return; }
+  if(msg){msg.style.display='block';msg.style.color='#4a9eff';msg.textContent='Connexion...';}
+  if(btn) btn.disabled=true;
+  try{
+    const r=await fetch(API_BASE+'/api/auth/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(d.token){
+      localStorage.setItem('omnis_token', d.token);
+      localStorage.setItem('omnis_user',  JSON.stringify(d.user));
+      _currentUser=d.user;
+      _updateAuthUI();
+      closeModal('login-modal');
+      if(msg){msg.textContent='';}
+    } else {
+      if(msg){msg.style.color='#e05252';msg.textContent=d.error||'Erreur inconnue';}
+    }
+  } catch(e){ if(msg){msg.style.color='#e05252';msg.textContent='Erreur réseau';} }
+  finally{ if(btn) btn.disabled=false; }
+}
+
+// ── Register ───────────────────────────────────────────────────────────────
+async function doRegister(){
+  const name  = document.getElementById('reg-name')?.value?.trim();
+  const email = document.getElementById('reg-email')?.value?.trim();
+  const pass  = document.getElementById('reg-pass')?.value;
+  const cgu   = document.getElementById('reg-cgu')?.checked;
+  const msg   = document.getElementById('reg-msg');
+  const btn   = document.getElementById('reg-btn');
+  if(!email||!pass){ if(msg){msg.style.display='block';msg.style.color='#e05252';msg.textContent='Email et mot de passe requis.';} return; }
+  if(pass.length<8){ if(msg){msg.style.display='block';msg.style.color='#e05252';msg.textContent='Mot de passe trop court (8 car. min).';} return; }
+  if(!cgu){ if(msg){msg.style.display='block';msg.style.color='#e05252';msg.textContent='Veuillez accepter les CGU.';} return; }
+  if(msg){msg.style.display='block';msg.style.color='#4a9eff';msg.textContent='Création du compte...';}
+  if(btn) btn.disabled=true;
+  try{
+    const r=await fetch(API_BASE+'/api/auth/register',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass,name})});
+    const d=await r.json();
+    if(d.message){
+      if(msg){msg.style.color='#3dd68c';msg.textContent='✓ '+d.message;}
+      if(btn) btn.style.display='none';
+    } else {
+      if(msg){msg.style.color='#e05252';msg.textContent=d.error||'Erreur';}
+    }
+  } catch(e){ if(msg){msg.style.color='#e05252';msg.textContent='Erreur réseau';} }
+  finally{ if(btn) btn.disabled=false; }
+}
+
+// ── Logout ─────────────────────────────────────────────────────────────────
+async function doLogout(){
+  const tok=_tok();
+  if(tok) fetch(API_BASE+'/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+tok}}).catch(()=>{});
+  localStorage.removeItem('omnis_token');
+  localStorage.removeItem('omnis_user');
+  _currentUser=null;
+  _updateAuthUI();
+  closeModal('account-modal');
+}
+
+// ── Stripe ─────────────────────────────────────────────────────────────────
+async function startCheckout(){
+  if(!_tok()){ openLoginModal(); return; }
+  const btn=document.getElementById('checkout-btn');
+  if(btn){btn.disabled=true;btn.textContent='Chargement...';}
+  try{
+    const r=await fetch(API_BASE+'/api/billing/create-checkout',{method:'POST',headers:{Authorization:'Bearer '+_tok()}});
+    const d=await r.json();
+    if(d.checkout_url) window.location.href=d.checkout_url;
+    else { alert(d.error||'Erreur Stripe'); if(btn){btn.disabled=false;btn.textContent="S'abonner — 5€/mois";} }
+  } catch(e){ alert('Erreur réseau'); if(btn){btn.disabled=false;} }
+}
+async function openBillingPortal(){
+  if(!_tok()) return;
+  const r=await fetch(API_BASE+'/api/billing/portal',{headers:{Authorization:'Bearer '+_tok()}}).catch(()=>null);
+  if(!r) return;
+  const d=await r.json().catch(()=>({}));
+  if(d.portal_url) window.open(d.portal_url,'_blank');
+}
+
+// ── Init session au chargement ─────────────────────────────────────────────
+(async function initAuth(){
+  // 1. Lecture cache localStorage (affichage immédiat sans attendre l'API)
+  const cachedUser = JSON.parse(localStorage.getItem('omnis_user') || 'null');
+  const tok = _tok();
+  if(cachedUser && tok){ _currentUser=cachedUser; _updateAuthUI(); }
+
+  // 2. Vérification API en arrière-plan
+  if(tok){
+    try{
+      const r=await fetch(API_BASE+'/api/auth/me',{headers:{Authorization:'Bearer '+tok},signal:AbortSignal.timeout(6000)});
+      if(r.ok){
+        _currentUser=await r.json();
+        localStorage.setItem('omnis_user',JSON.stringify(_currentUser));
+        _updateAuthUI();
+      } else {
+        localStorage.removeItem('omnis_token');
+        localStorage.removeItem('omnis_user');
+        _currentUser=null;
+        _updateAuthUI();
+      }
+    } catch(e){ /* réseau indisponible — garder le cache */ }
+  }
+
+  // 3. Détecter retour paiement Stripe
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('payment')==='success'){
+    const toast=document.getElementById('payment-toast');
+    if(toast){ toast.style.display='flex'; setTimeout(()=>toast.style.display='none',5000); }
+    // Nettoyer l'URL
+    history.replaceState({},'',window.location.pathname);
+  }
+})();
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') ['login-modal','register-modal','account-modal','alert-modal'].forEach(closeModal);
+});
 
 /* ── Alertes email ── */
 function openAlertModal(){
@@ -3004,5 +3278,129 @@ window.addEventListener('load',()=>{
   document.head.appendChild(s);
 });
 </script>
+
+</div>
+
+</div>
+
+<!-- ══ TOAST PAIEMENT SUCCÈS ══ -->
+<div id="payment-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+     background:#0d1117;border:1px solid rgba(61,214,140,.4);border-radius:8px;padding:14px 24px;
+     z-index:9999;align-items:center;gap:12px;font-family:var(--mono);font-size:10px;
+     box-shadow:0 8px 32px rgba(0,0,0,.5)">
+  <span style="color:var(--green);font-size:20px">✦</span>
+  <div>
+    <div style="color:var(--green);font-weight:700;letter-spacing:1px">Bienvenue dans OMNIS Premium !</div>
+    <div style="color:#666;font-size:8px;margin-top:2px">Tous vos accès sont maintenant activés.</div>
+  </div>
+  <button onclick="document.getElementById('payment-toast').style.display='none'"
+    style="background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:0">×</button>
+</div>
+
+<!-- ══ MODAL LOGIN (version enrichie) ══ -->
+<div id="login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+  <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:32px;width:380px;max-width:95vw;position:relative">
+    <button onclick="closeModal('login-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
+    <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
+    <h3 style="margin:0 0 24px;font-size:18px;color:#fff;font-weight:700">Connexion</h3>
+    <div style="margin-bottom:14px">
+      <label style="font-family:var(--mono);font-size:7px;color:#555;letter-spacing:1px;display:block;margin-bottom:5px">EMAIL</label>
+      <input id="li-email" type="email" placeholder="vous@exemple.com" autocomplete="email"
+        style="width:100%;background:#080c12;border:1px solid #1e2530;border-radius:5px;padding:10px 12px;color:#ccc;font-family:var(--mono);font-size:11px;outline:none;box-sizing:border-box;transition:border .15s"
+        onfocus="this.style.borderColor='#2878b4'" onblur="this.style.borderColor='#1e2530'"
+        onkeydown="if(event.key==='Enter')document.getElementById('li-pass').focus()">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-family:var(--mono);font-size:7px;color:#555;letter-spacing:1px;display:block;margin-bottom:5px">MOT DE PASSE</label>
+      <input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+        style="width:100%;background:#080c12;border:1px solid #1e2530;border-radius:5px;padding:10px 12px;color:#ccc;font-family:var(--mono);font-size:11px;outline:none;box-sizing:border-box;transition:border .15s"
+        onfocus="this.style.borderColor='#2878b4'" onblur="this.style.borderColor='#1e2530'"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button id="li-btn" onclick="doLogin()"
+      style="width:100%;padding:11px;background:#4a9eff;border:none;border-radius:5px;color:#000;
+             font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;
+             transition:opacity .15s;margin-bottom:14px"
+      onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+      SE CONNECTER →
+    </button>
+    <div id="li-msg" style="display:none;font-family:var(--mono);font-size:9px;text-align:center;margin-bottom:12px"></div>
+    <div style="text-align:center;font-family:var(--mono);font-size:8px;color:#444">
+      Pas encore de compte ?
+      <span onclick="closeModal('login-modal');openRegisterModal()" style="color:#4a9eff;cursor:pointer;margin-left:4px">S'inscrire</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL REGISTER (version enrichie) ══ -->
+<div id="register-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+  <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:32px;width:380px;max-width:95vw;position:relative">
+    <button onclick="closeModal('register-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
+    <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
+    <h3 style="margin:0 0 24px;font-size:18px;color:#fff;font-weight:700">Créer un compte</h3>
+    <div style="margin-bottom:12px">
+      <input id="reg-name" type="text" placeholder="Prénom" autocomplete="given-name"
+        style="width:100%;background:#080c12;border:1px solid #1e2530;border-radius:5px;padding:10px 12px;color:#ccc;font-family:var(--mono);font-size:11px;outline:none;box-sizing:border-box;transition:border .15s"
+        onfocus="this.style.borderColor='#2878b4'" onblur="this.style.borderColor='#1e2530'">
+    </div>
+    <div style="margin-bottom:12px">
+      <input id="reg-email" type="email" placeholder="Email" autocomplete="email"
+        style="width:100%;background:#080c12;border:1px solid #1e2530;border-radius:5px;padding:10px 12px;color:#ccc;font-family:var(--mono);font-size:11px;outline:none;box-sizing:border-box;transition:border .15s"
+        onfocus="this.style.borderColor='#2878b4'" onblur="this.style.borderColor='#1e2530'">
+    </div>
+    <div style="margin-bottom:14px">
+      <input id="reg-pass" type="password" placeholder="Mot de passe (8 car. min)" autocomplete="new-password"
+        style="width:100%;background:#080c12;border:1px solid #1e2530;border-radius:5px;padding:10px 12px;color:#ccc;font-family:var(--mono);font-size:11px;outline:none;box-sizing:border-box;transition:border .15s"
+        onfocus="this.style.borderColor='#2878b4'" onblur="this.style.borderColor='#1e2530'"
+        onkeydown="if(event.key==='Enter')doRegister()">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:18px;font-family:var(--mono);font-size:8px;color:#666">
+      <input id="reg-cgu" type="checkbox" style="accent-color:#4a9eff;width:13px;height:13px">
+      J'accepte les <a href="#" style="color:#4a9eff">conditions d'utilisation</a>
+    </label>
+    <button id="reg-btn" onclick="doRegister()"
+      style="width:100%;padding:11px;background:#4a9eff;border:none;border-radius:5px;color:#000;
+             font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;
+             transition:opacity .15s;margin-bottom:14px"
+      onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+      CRÉER MON COMPTE →
+    </button>
+    <div id="reg-msg" style="display:none;font-family:var(--mono);font-size:9px;text-align:center;margin-bottom:12px"></div>
+    <div style="text-align:center;font-family:var(--mono);font-size:8px;color:#444">
+      Déjà un compte ?
+      <span onclick="closeModal('register-modal');openLoginModal()" style="color:#4a9eff;cursor:pointer;margin-left:4px">Se connecter</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL COMPTE ══ -->
+<div id="account-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+  <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:28px;width:360px;max-width:95vw;position:relative">
+    <button onclick="closeModal('account-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
+    <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
+    <h3 style="margin:0 0 20px;font-size:16px;color:#fff;font-weight:700">Mon compte</h3>
+    <div id="acc-info" style="font-family:var(--mono);font-size:10px;color:#ccc;margin-bottom:20px;padding:14px;background:#080c12;border-radius:6px;border:1px solid #1e2530"></div>
+    <div id="acc-premium-btn" style="display:none;margin-bottom:10px">
+      <button id="checkout-btn" onclick="startCheckout()"
+        style="width:100%;padding:10px;background:#3dd68c;border:none;border-radius:5px;color:#000;
+               font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:1px">
+        PASSER PREMIUM — 5€/MOIS ⭐
+      </button>
+    </div>
+    <div id="acc-portal-btn" style="display:none;margin-bottom:10px">
+      <button onclick="openBillingPortal()"
+        style="width:100%;padding:9px;background:var(--s2);border:1px solid var(--border2);border-radius:5px;
+               color:var(--text2);font-family:var(--mono);font-size:9px;cursor:pointer">
+        GÉRER MON ABONNEMENT
+      </button>
+    </div>
+    <button onclick="doLogout()"
+      style="width:100%;padding:9px;background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);
+             border-radius:5px;color:#e05252;font-family:var(--mono);font-size:9px;cursor:pointer;letter-spacing:1px">
+      SE DÉCONNECTER
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
