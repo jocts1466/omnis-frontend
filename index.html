@@ -222,7 +222,6 @@ nav{
   <button class="nav-tab" onclick="switchTab('news',this)">NEWS</button>
   <button class="nav-tab" onclick="switchTab('calendrier',this)">CALENDRIER</button>
   <button class="nav-tab" onclick="switchTab('portfolio',this)">FAVORIS</button>
-  <button class="nav-tab" onclick="switchTab('pricing',this)">PREMIUM</button>
   <div style="width:1px;background:var(--border);margin:6px 4px;align-self:stretch"></div>
   <button onclick="openAlertModal()"
     style="display:flex;align-items:center;gap:5px;background:rgba(74,158,255,.1);
@@ -244,7 +243,7 @@ nav{
     <span id="user-plan-badge" style="font-size:6px;color:#888">Gratuit</span>
   </button>
   <!-- Bouton Passer Premium (visible si free) -->
-  <button id="nav-premium-btn" onclick="switchTab('pricing',null)" style="display:none;align-items:center;gap:4px;
+  <button id="nav-premium-btn" onclick="openPricingModal()" style="display:none;align-items:center;gap:4px;
     background:rgba(61,214,140,.1);border:1px solid rgba(61,214,140,.3);border-radius:4px;
     color:var(--green);font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
     letter-spacing:.5px;transition:all .15s;margin:0 2px"
@@ -371,7 +370,7 @@ nav{
     <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="hint">GLISSER · SCROLL POUR ZOOMER · CLIQUER SUR UN POINT</div>
     <div id="live-badge" class="live-badge"><span class="dot"></span>LIVE</div>
-    <div id="map-premium-overlay" style="display:none;position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(8,12,18,.94);border:1px solid #1e2530;border-radius:8px;padding:16px 24px;z-index:100;text-align:center"><div style="font-family:var(--mono);font-size:9px;color:#ccc;margin-bottom:10px">🔒 MAP maritime &amp; aérienne — Premium</div><button onclick="switchTab('pricing',null)" style="background:#2878b4;border:none;border-radius:4px;color:#fff;font-family:var(--mono);font-size:8px;cursor:pointer;padding:7px 16px;letter-spacing:1px;font-weight:700">DÉCOUVRIR PREMIUM</button></div>
+    <div id="map-premium-overlay" style="display:none;position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(8,12,18,.94);border:1px solid #1e2530;border-radius:8px;padding:16px 24px;z-index:100;text-align:center"><div style="font-family:var(--mono);font-size:9px;color:#ccc;margin-bottom:10px">🔒 MAP maritime &amp; aérienne — Premium</div><button onclick="openPricingModal()" style="background:#2878b4;border:none;border-radius:4px;color:#fff;font-family:var(--mono);font-size:8px;cursor:pointer;padding:7px 16px;letter-spacing:1px;font-weight:700">DÉCOUVRIR PREMIUM</button></div>
     <div id="zone-tip" class="zone-tip"></div>
     <div id="map-debug" style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.82);
          color:#ccc;font-family:monospace;font-size:9px;padding:7px 10px;z-index:1000;
@@ -620,54 +619,6 @@ nav{
 </div>
 
 <!-- ══ PRICING ══ -->
-<div class="view" id="view-pricing" style="flex-direction:column;overflow-y:auto;background:var(--bg);padding:40px 24px">
-  <div style="max-width:700px;margin:0 auto;width:100%">
-    <h2 style="font-family:var(--mono);font-size:14px;color:var(--text);letter-spacing:2px;margin:0 0 8px">◈ OMNIS INTELLIGENCE</h2>
-    <p style="font-family:var(--mono);font-size:9px;color:var(--text3);margin:0 0 32px">Choisissez votre niveau d'accès</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <!-- Gratuit -->
-      <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:24px">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:2px;margin-bottom:8px">GRATUIT</div>
-        <div style="font-size:28px;font-weight:700;color:var(--text);margin-bottom:16px">0€</div>
-        <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:11px;color:var(--text2);line-height:2">
-          <li>✓ 3 actifs (OR, BTC, SP500)</li>
-          <li>✓ Signaux basiques</li>
-          <li>✓ Newsletter hebdomadaire</li>
-          <li style="color:var(--text3)">✗ Signaux complets (30 actifs)</li>
-          <li style="color:var(--text3)">✗ Alertes email temps réel</li>
-          <li style="color:var(--text3)">✗ MAP maritime & aérienne</li>
-        </ul>
-        <button onclick="openRegisterModal()"
-          style="width:100%;padding:10px;background:var(--s2);border:1px solid var(--border2);border-radius:4px;
-                 color:var(--text2);font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">
-          COMMENCER GRATUITEMENT
-        </button>
-      </div>
-      <!-- Premium -->
-      <div style="background:var(--s1);border:1px solid #2878b4;border-radius:8px;padding:24px;position:relative">
-        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);
-          background:#2878b4;color:#fff;font-family:var(--mono);font-size:7px;padding:3px 12px;border-radius:12px;letter-spacing:1px">RECOMMANDÉ</div>
-        <div style="font-family:var(--mono);font-size:8px;color:#4a9eff;letter-spacing:2px;margin-bottom:8px">PREMIUM</div>
-        <div style="font-size:28px;font-weight:700;color:var(--text);margin-bottom:4px">5€<span style="font-size:13px;color:var(--text3)">/mois</span></div>
-        <div style="font-family:var(--mono);font-size:7px;color:var(--text3);margin-bottom:16px">Résiliable à tout moment</div>
-        <ul style="list-style:none;padding:0;margin:0 0 20px;font-size:11px;color:var(--text2);line-height:2">
-          <li style="color:var(--green)">✓ 30 actifs complets</li>
-          <li style="color:var(--green)">✓ Explications causales détaillées</li>
-          <li style="color:var(--green)">✓ Alertes email temps réel</li>
-          <li style="color:var(--green)">✓ MAP maritime & aérienne</li>
-          <li style="color:var(--green)">✓ Historique & précision</li>
-          <li style="color:var(--green)">✓ Newsletter quotidienne</li>
-        </ul>
-        <button onclick="startCheckout()"
-          style="width:100%;padding:10px;background:#2878b4;border:none;border-radius:4px;
-                 color:#fff;font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px;font-weight:700">
-          S'ABONNER — 5€/MOIS →
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 </div><!-- .main -->
 </div><!-- #app -->
 
@@ -727,7 +678,7 @@ let EVENTS=[]
 function switchTab(id,btn){
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   // Cacher toutes les vues connues
-  ['map','predictions','marches','briefing','news','calendrier','portfolio','pricing'].forEach(v=>{
+  ['map','predictions','marches','briefing','news','calendrier','portfolio'].forEach(v=>{
     const el=document.getElementById('view-'+v);
     if(el) el.style.display='none';
   });
@@ -758,6 +709,13 @@ let _currentUser = null;
 function _tok(){ return localStorage.getItem('omnis_token') || ''; }
 function _authH(){ return _tok() ? {Authorization:'Bearer '+_tok()} : {}; }
 function closeModal(id){ const m=document.getElementById(id); if(m) m.style.display='none'; }
+
+function openPricingModal(){
+  if(_currentUser?.plan==='premium') return;          // déjà premium, rien à faire
+  if(!_currentUser){ openLoginModal(); return; }      // pas connecté → login d'abord
+  const m=document.getElementById('pricing-modal');
+  if(m) m.style.display='flex';
+}
 
 // ── Modals ─────────────────────────────────────────────────────────────────
 function openLoginModal(){
@@ -963,7 +921,7 @@ async function openBillingPortal(){
 })();
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') ['login-modal','register-modal','account-modal','alert-modal'].forEach(closeModal);
+  if(e.key==='Escape') ['login-modal','register-modal','account-modal','alert-modal','pricing-modal'].forEach(closeModal);
 });
 
 /* ── Alertes email ── */
@@ -3301,6 +3259,38 @@ window.addEventListener('load',()=>{
 
 </div>
 
+<!-- ══ MODAL PRICING ══ -->
+<div id="pricing-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+  <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:32px;width:420px;max-width:95vw;position:relative">
+    <button onclick="closeModal('pricing-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
+    <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
+    <h3 style="margin:0 0 4px;font-size:20px;color:#fff;font-weight:700">Passer à OMNIS Premium</h3>
+    <p style="margin:0 0 20px;font-family:var(--mono);font-size:9px;color:#555">Résiliable à tout moment · Sans engagement</p>
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:20px">
+      <span style="font-size:36px;font-weight:800;color:#fff">5€</span>
+      <span style="font-family:var(--mono);font-size:10px;color:#666">/ mois</span>
+    </div>
+    <ul style="list-style:none;padding:0;margin:0 0 24px;font-size:12px;color:#ccc;line-height:2.2">
+      <li><span style="color:var(--green)">✓</span> &nbsp;30 actifs complets (pétrole, métaux, crypto, indices…)</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Explications causales détaillées</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;MAP maritime &amp; aérienne temps réel</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Alertes email sur signaux forts</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Newsletter quotidienne</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Historique des prédictions &amp; taux de précision</li>
+    </ul>
+    <button id="checkout-btn" onclick="closeModal('pricing-modal');startCheckout()"
+      style="width:100%;padding:13px;background:#3dd68c;border:none;border-radius:6px;color:#000;
+             font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;
+             transition:opacity .15s;margin-bottom:12px"
+      onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+      S'ABONNER MAINTENANT — 5€/MOIS
+    </button>
+    <p style="margin:0;font-family:var(--mono);font-size:8px;color:#444;text-align:center">
+      Paiement sécurisé Stripe · Annulation en 1 clic
+    </p>
+  </div>
+</div>
+
 <!-- ══ TOAST PAIEMENT SUCCÈS ══ -->
 <div id="payment-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
      background:#0d1117;border:1px solid rgba(61,214,140,.4);border-radius:8px;padding:14px 24px;
@@ -3399,7 +3389,7 @@ window.addEventListener('load',()=>{
     <h3 style="margin:0 0 20px;font-size:16px;color:#fff;font-weight:700">Mon compte</h3>
     <div id="acc-info" style="font-family:var(--mono);font-size:10px;color:#ccc;margin-bottom:20px;padding:14px;background:#080c12;border-radius:6px;border:1px solid #1e2530"></div>
     <div id="acc-premium-btn" style="display:none;margin-bottom:10px">
-      <button id="checkout-btn" onclick="startCheckout()"
+      <button id="acc-checkout-btn" onclick="startCheckout()"
         style="width:100%;padding:10px;background:#3dd68c;border:none;border-radius:5px;color:#000;
                font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:1px">
         PASSER PREMIUM — 5€/MOIS ⭐
