@@ -1245,15 +1245,15 @@ function toggleMF(layer){
 
 function _mapDebug(html){ const el=document.getElementById('map-debug'); if(el){el.style.display='block';el.innerHTML=html;} }
 
-// Helper global : ajoute automatiquement le JWT à tous les appels API
-function authFetch(url, options = {}){
+// Helper : ajoute le JWT sur les endpoints Premium (maritime, flights, signals)
+function authFetch(url, options = {}) {
   const token = localStorage.getItem('omnis_token');
-  const headers = {
-    ...(options.headers || {}),
-    ...(token ? {'Authorization': 'Bearer ' + token} : {}),
-  };
+  if (token) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + token;
+  }
   const fullUrl = url.startsWith('http') ? url : API_BASE + url;
-  return fetch(fullUrl, {...options, headers});
+  return fetch(fullUrl, options);
 }
 
 function fetchWithTimeout(url, ms){
