@@ -694,6 +694,13 @@ function switchTab(id,btn){
   if(id==='calendrier') loadCal();
   if(id==='portfolio')  initPortfolio();
   if(id==='analyse')     initAnalyse();
+  if(id==='map'){
+    setTimeout(()=>{
+      const token=localStorage.getItem('omnis_token');
+      console.log('[MAP] Token disponible:', token ? 'OUI' : 'NON');
+      loadMaritimeData();
+    }, 500);
+  }
 }
 setInterval(()=>{
   const n=new Date();
@@ -1275,6 +1282,8 @@ function _debugPanel(){
 }
 
 async function loadMaritimeData(){
+  const token=localStorage.getItem('omnis_token');
+  console.log('[MARITIME] Token:', token ? token.substring(0,20)+'...' : 'ABSENT');
   _mapDebug('⏳ Vols en cours...');
 
   // ── Phase 1 : vols en premier (ADSB.fi, rapide ~2-5s) ──────────
