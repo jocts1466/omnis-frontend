@@ -892,15 +892,33 @@ async function doLogout(){
 
 // ── Stripe ─────────────────────────────────────────────────────────────────
 async function startCheckout(){
-  if(!_tok()){ openLoginModal(); return; }
+  const token = localStorage.getItem('omnis_token');
+  if(!token){ openLoginModal(); return; }
   const btn=document.getElementById('checkout-btn');
   if(btn){btn.disabled=true;btn.textContent='Chargement...';}
   try{
-    const r=await fetch(API_BASE+'/api/billing/create-checkout',{method:'POST',headers:{Authorization:'Bearer '+_tok()}});
-    const d=await r.json();
-    if(d.checkout_url) window.location.href=d.checkout_url;
-    else { alert(d.error||'Erreur Stripe'); if(btn){btn.disabled=false;btn.textContent="S'abonner — 5€/mois";} }
-  } catch(e){ alert('Erreur réseau'); if(btn){btn.disabled=false;} }
+    const res = await fetch(API_BASE+'/api/billing/create-checkout',{
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type':  'application/json',
+      },
+    });
+    const data = await res.json();
+    console.log('[CHECKOUT]', data);
+    if(data.error){
+      alert('Erreur : ' + data.error);
+      if(btn){btn.disabled=false;btn.textContent="S'abonner — 5€/mois";}
+      return;
+    }
+    if(data.checkout_url){
+      window.location.href = data.checkout_url;
+    }
+  } catch(e){
+    console.error('[CHECKOUT ERROR]', e);
+    alert('Erreur réseau : ' + e.message);
+    if(btn){btn.disabled=false;btn.textContent="S'abonner — 5€/mois";}
+  }
 }
 async function openBillingPortal(){
   if(!_tok()) return;
