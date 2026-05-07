@@ -3412,46 +3412,97 @@ function updateStatusbar(){
 setInterval(updateStatusbar, 1000);
 
 // ══ TRADINGVIEW PRED ══
-let _predTVLoaded = false;
-function _buildPredTV(tvSym){
+// ══ GRAPHIQUE YAHOO FINANCE SVG ══
+const _YAHOO_MAP = {
+  BRENT:'BZ=F', WTI:'CL=F', OR:'GC=F', ARGENT:'SI=F',
+  GAZ_EU:'TTF=F', GAZ_US:'NG=F', CUIVRE:'HG=F',
+  SP500:'^GSPC', CAC40:'^FCHI', VIX:'^VIX',
+  BTC:'BTC-USD', ETH:'ETH-USD', EURUSD:'EURUSD=X', DXY:'DX-Y.NYB',
+  BLE:'ZW=F', MAIS:'ZC=F', SOJA:'ZS=F', CAFE:'KC=F', CACAO:'CC=F',
+  LITHIUM:'LIT', URANIUM:'URA', SOX:'^SOX', US10Y:'^TNX',
+  CNH:'CNH=X', BRL:'BRL=X', INR:'INR=X', CHARBON:'KOL', NICKEL:'NI=F',
+};
+
+function _drawPredChart(prices, direction, containerId){
+  const container = document.getElementById(containerId);
+  if(!container || !prices || prices.length < 2) return;
+  const W = 800, H = 160, PAD = {t:10, r:55, b:28, l:8};
+  const vals = prices.map(p => p.v);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const rng = mx - mn || 1;
+  const col = direction === 'HAUSSIER' ? '#c8860a' : '#cc4444';
+  const toX = i => PAD.l + (i / (prices.length-1)) * (W - PAD.l - PAD.r);
+  const toY = v => PAD.t + (1 - (v - mn) / rng) * (H - PAD.t - PAD.b);
+
+  const pts  = prices.map((p,i) => `${toX(i).toFixed(1)},${toY(p.v).toFixed(1)}`).join(' ');
+  const poly = `${pts} ${toX(prices.length-1).toFixed(1)},${H-PAD.b} ${toX(0).toFixed(1)},${H-PAD.b}`;
+
+  // Grilles horizontales (4 lignes)
+  const gridLines = [0.25,0.5,0.75].map(r => {
+    const y = (PAD.t + r*(H-PAD.t-PAD.b)).toFixed(1);
+    return `<line x1="${PAD.l}" y1="${y}" x2="${W-PAD.r}" y2="${y}" stroke="#1a1a1a" stroke-width="0.5" stroke-dasharray="3,3"/>`;
+  }).join('');
+
+  // Labels prix à droite
+  const priceLabels = [mn, (mn+mx)/2, mx].map(v => {
+    const y = toY(v).toFixed(1);
+    const lbl = v > 1000 ? v.toFixed(0) : v > 10 ? v.toFixed(2) : v.toFixed(4);
+    return `<text x="${W-PAD.r+4}" y="${y}" fill="#445566" font-size="8" dominant-baseline="middle" font-family="'Courier New',monospace">${lbl}</text>`;
+  }).join('');
+
+  // Ligne prix actuel en pointillés
+  const lastY = toY(vals[vals.length-1]).toFixed(1);
+  const lastVal = vals[vals.length-1];
+  const lastLbl = lastVal > 1000 ? lastVal.toFixed(0) : lastVal > 10 ? lastVal.toFixed(2) : lastVal.toFixed(4);
+
+  // Labels dates (5 points équidistants)
+  const step = Math.floor(prices.length / 5);
+  const dateLabels = [0,1,2,3,4].map(i => {
+    const idx = Math.min(i*step, prices.length-1);
+    const x = toX(idx).toFixed(1);
+    const d = new Date(prices[idx].t);
+    const lbl = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+    return `<text x="${x}" y="${H-6}" fill="#333" font-size="7" text-anchor="middle" font-family="'Courier New',monospace">${lbl}</text>`;
+  }).join('');
+
+  container.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
+    ${gridLines}
+    <polygon points="${poly}" fill="${col}" fill-opacity="0.05"/>
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="${PAD.l}" y1="${lastY}" x2="${W-PAD.r}" y2="${lastY}" stroke="${col}" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+    <text x="${W-PAD.r+4}" y="${lastY}" fill="${col}" font-size="8" dominant-baseline="middle" font-weight="bold" font-family="'Courier New',monospace">${lastLbl}</text>
+    ${priceLabels}
+    ${dateLabels}
+  </svg>`;
+}
+
+async function _loadPredChart(omnisSym, direction){
   const container = document.getElementById('pred-tv-container');
   if(!container) return;
-  container.innerHTML = '<div id="pred_tv_inner" style="width:100%;height:100%"></div>';
-  function _create(){
-    if(!window.TradingView) return;
-    new TradingView.widget({
-      container_id: 'pred_tv_inner',
-      autosize: true,
-      symbol: tvSym,
-      interval: '240',
-      timezone: 'Etc/UTC',
-      theme: 'dark',
-      style: '1',
-      locale: 'fr',
-      backgroundColor: '#000000',
-      gridColor: '#1a1a1a',
-      toolbar_bg: '#050505',
-      enable_publishing: false,
-      hide_side_toolbar: false,
-      allow_symbol_change: false,
-      save_image: false,
-      hide_legend: false,
-    });
-  }
-  if(window.TradingView){ _create(); return; }
-  if(!_predTVLoaded){
-    _predTVLoaded = true;
-    const s = document.createElement('script');
-    s.src = 'https://s3.tradingview.com/tv.js';
-    s.async = true;
-    s.onload = _create;
-    document.head.appendChild(s);
-  } else {
-    setTimeout(_create, 800);
+  container.innerHTML = '<div style="color:#445566;font-size:9px;padding:8px;font-family:\'Courier New\'">Chargement...</div>';
+  const yTicker = _YAHOO_MAP[omnisSym] || omnisSym;
+  const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yTicker)}?interval=4h&range=10d`;
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  try{
+    const resp = await fetch(proxy, {signal: AbortSignal.timeout(12000)});
+    const raw  = await resp.json();
+    const json = JSON.parse(raw.contents);
+    const res  = json.chart.result[0];
+    const timestamps = res.timestamp;
+    const closes     = res.indicators.quote[0].close;
+    const prices = timestamps
+      .map((t,i) => ({t: t*1000, v: closes[i]}))
+      .filter(p => p.v !== null && !isNaN(p.v));
+    if(prices.length < 2) throw new Error('Pas assez de données');
+    _drawPredChart(prices, direction, 'pred-tv-container');
+  } catch(e){
+    if(container) container.innerHTML = `<div style="color:#333;font-size:9px;padding:8px;font-family:'Courier New'">${omnisSym} — données indisponibles</div>`;
   }
 }
 
-// ══ TICKER BAR — top movers dynamiques ══
+let _chartRefreshTimer = null;
+
+// ══ TICKER BAR — top movers par |variation_1j| ══
 async function updateTicker(){
   try{
     const tok = localStorage.getItem('omnis_token');
@@ -3459,28 +3510,34 @@ async function updateTicker(){
     const r = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokParam);
     const d = await r.json();
     const sigs = (d.signals || [])
-      .filter(s => s.direction !== 'NEUTRE' && s.probability > 0)
-      .sort((a,b) => b.probability - a.probability)
+      .filter(s => s.direction !== 'NEUTRE')
+      .map(s => ({
+        ...s,
+        // Utiliser momentum_1j si dispo, sinon probability comme proxy de mouvement
+        _mov: Math.abs(s.momentum_1j || s.price_change || s.probability || 0),
+      }))
+      .sort((a,b) => b._mov - a._mov)
       .slice(0, 8);
 
     const bar = document.getElementById('tickerbar');
     if(!bar) return;
-    // Garder le label MKT et reconstruire les spans
-    let html = '<span style="color:#445566;font-size:9px;margin-right:8px">MKT</span>';
+    let html = '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px;flex-shrink:0">MKT</span>';
     sigs.forEach(s => {
-      const dir = s.direction === 'HAUSSIER' ? '▲' : '▼';
-      const col = s.direction === 'HAUSSIER' ? '#3aaa6a' : '#cc4444';
-      html += `<span style="font-size:9px;color:${col};margin-right:16px">${s.symbol} ${dir} ${s.probability}%</span>`;
+      const isUp  = s.direction === 'HAUSSIER';
+      const dir   = isUp ? '▲' : '▼';
+      const col   = isUp ? '#3aaa6a' : '#cc4444';
+      const mov   = s.momentum_1j != null
+        ? `${s.momentum_1j >= 0 ? '+' : ''}${parseFloat(s.momentum_1j).toFixed(2)}%`
+        : `${s.probability}%`;
+      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">`
+            + `${s.symbol} ${dir}${mov}</span>`;
     });
-    if(sigs.length === 0){
-      // Fallback signaux fixes si pas encore chargés
-      html += '<span style="font-size:9px;color:#445566">Chargement...</span>';
-    }
+    if(!sigs.length) html += '<span style="font-size:9px;color:#333">--</span>';
     bar.innerHTML = html;
   } catch(e){}
 }
 updateTicker();
-setInterval(updateTicker, 5*60*1000);  // 5 minutes
+setInterval(updateTicker, 5*60*1000);
 
 // ══ CANCEL SUBSCRIPTION ══
 async function confirmCancel(){
@@ -3615,18 +3672,10 @@ function _renderPredDetail(sig){
     ampEl.textContent = `+${amin}—+${amax}%`;
   }
 
-  // TradingView widget
-  const _TV_MAP = {
-    BRENT:'TVC:UKOIL', WTI:'TVC:USOIL', OR:'TVC:GOLD', ARGENT:'TVC:SILVER',
-    CUIVRE:'TVC:COPPER', GAZ_EU:'TVC:NATURALGAS', GAZ_US:'TVC:NATURALGAS',
-    SP500:'SP:SPX', CAC40:'EURONEXT:PX1', VIX:'TVC:VIX', DXY:'TVC:DXY',
-    EURUSD:'FX:EURUSD', BTC:'BINANCE:BTCUSDT', ETH:'BINANCE:ETHUSDT',
-    BLE:'CBOT:ZW1!', MAIS:'CBOT:ZC1!', SOJA:'CBOT:ZS1!',
-    CAFE:'ICEUS:KC1!', CACAO:'ICEUS:CC1!', LITHIUM:'AMEX:LIT',
-    URANIUM:'AMEX:URA', SOX:'NASDAQ:SOX', NICKEL:'COMEX:HG1!',
-  };
-  const tvSym = _TV_MAP[sig.symbol] || sig.symbol;
-  _buildPredTV(tvSym);
+  // Graphique Yahoo Finance SVG
+  if(_chartRefreshTimer) clearInterval(_chartRefreshTimer);
+  _loadPredChart(sig.symbol, sig.direction);
+  _chartRefreshTimer = setInterval(() => _loadPredChart(sig.symbol, sig.direction), 15*60*1000);
 
   // Q1 : Causes
   const comps = (sig.components || []).filter(c => c.force > 0.3).slice(0, 4);
