@@ -207,7 +207,7 @@ nav{
   <span id="sb-feeds"   style="color:#445566;font-size:9px">FEEDS —</span>
   <span id="sb-vessels" style="color:#445566;font-size:9px">VESSELS —</span>
   <span id="sb-aircraft"style="color:#445566;font-size:9px">AIRCRAFT —</span>
-  <span id="sb-rules"   style="color:#445566;font-size:9px">RULES 124</span>
+  <span id="sb-rules"   style="color:#445566;font-size:9px">RULES 113</span>
   <span style="margin-left:auto;color:#c8860a;font-size:9px" id="sb-clock"></span>
 </div>
 <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}</style>
@@ -3817,7 +3817,7 @@ function _renderPredDetail(sig){
 </div>
 
 <!-- ══ MODAL PRICING ══ -->
-<div id="pricing-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+<div id="pricing-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10100;align-items:center;justify-content:center">
   <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:32px;width:420px;max-width:95vw;position:relative">
     <button onclick="closeModal('pricing-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
     <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
@@ -3863,7 +3863,7 @@ function _renderPredDetail(sig){
 </div>
 
 <!-- ══ MODAL LOGIN (version enrichie) ══ -->
-<div id="login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+<div id="login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10100;align-items:center;justify-content:center">
   <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:32px;width:380px;max-width:95vw;position:relative">
     <button onclick="closeModal('login-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
     <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
@@ -3898,7 +3898,7 @@ function _renderPredDetail(sig){
 </div>
 
 <!-- ══ MODAL REGISTER (version enrichie) ══ -->
-<div id="register-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
+<div id="register-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10100;align-items:center;justify-content:center">
   <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:32px;width:380px;max-width:95vw;position:relative">
     <button onclick="closeModal('register-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
     <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
@@ -3939,7 +3939,7 @@ function _renderPredDetail(sig){
 </div>
 
 <!-- ══ MODAL COMPTE ══ -->
-<div id="account-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9200;align-items:center;justify-content:center">
+<div id="account-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10100;align-items:center;justify-content:center">
   <div style="background:#000;border:1px solid #1a1a1a;border-radius:2px;max-width:420px;width:95vw;position:relative;max-height:90vh;overflow-y:auto">
     <button onclick="closeModal('account-modal')" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#445566;font-size:16px;cursor:pointer;line-height:1;font-family:var(--mono)">×</button>
 
@@ -4014,7 +4014,7 @@ function _renderPredDetail(sig){
       <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">ACTIFS</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:18px;color:#c8860a" id="lp-rules">124</div>
+      <div style="font-size:18px;color:#c8860a" id="lp-rules">113</div>
       <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">REGLES CAUSALES</div>
     </div>
     <div style="text-align:center">
@@ -4134,21 +4134,26 @@ window._updateAuthUI = function(){
 };
 
 async function _loadLandingStats(){
+  // Stats statiques fiables
+  const veEl = document.getElementById('lp-vessels');
+  const aeEl = document.getElementById('lp-aircraft');
+  // Tenter de charger les stats maritimes (sans token = peut être 401, on garde les valeurs statiques)
   try{
-    const r = await fetch(API_BASE + '/api/maritime/metrics', {signal: AbortSignal.timeout(8000)});
+    const r = await fetch(API_BASE + '/api/maritime/metrics', {signal: AbortSignal.timeout(6000)});
     if(r.ok){
       const d = await r.json();
-      const ve = document.getElementById('lp-vessels');
-      const ae = document.getElementById('lp-aircraft');
-      if(ve && d.vessels_total) ve.textContent = d.vessels_total;
+      if(d.vessels_total && veEl) veEl.textContent = d.vessels_total.toLocaleString();
     }
   } catch(e){}
+  // Stats avions depuis le cache flights (peut être 401 pour les non-connectés)
   try{
-    const r2 = await fetch(API_BASE + '/api/flights/zones', {signal: AbortSignal.timeout(8000)});
+    const r2 = await fetch(API_BASE + '/api/flights/test', {signal: AbortSignal.timeout(6000)});
     if(r2.ok){
       const d2 = await r2.json();
-      const ae = document.getElementById('lp-aircraft');
-      if(ae && d2.total_aircraft) ae.textContent = d2.total_aircraft;
+      // /api/flights/test retourne les deux APIs — compter les avions
+      let total = 0;
+      Object.values(d2).forEach(api => { if(api.aircraft_count) total += api.aircraft_count; });
+      if(total > 0 && aeEl) aeEl.textContent = total.toLocaleString();
     }
   } catch(e){}
 }
