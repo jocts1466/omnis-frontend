@@ -3573,7 +3573,12 @@ async function updateTicker(){
   if(!items.length) html += '<span style="font-size:9px;color:#333">--</span>';
   bar.innerHTML = html;
 }
-updateTicker();
+// Ticker : chargement différé 3s pour ne pas bloquer le rendu initial
+const _tickerBar = document.getElementById('tickerbar');
+if(_tickerBar) _tickerBar.innerHTML =
+  '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px">MKT</span>'
+  + '<span style="font-size:9px;color:#333;letter-spacing:1px">-- chargement prix --</span>';
+setTimeout(updateTicker, 3000);
 setInterval(updateTicker, 5*60*1000);
 
 /* ── AMÉLIORATION 3 : Push Notifications navigateur ── */
@@ -4206,14 +4211,20 @@ function _renderPredDetail(sig){
 
   <!-- Footer -->
   <div style="text-align:center;padding:0 24px">
-    <div style="font-size:9px;color:#333;margin-bottom:16px">
-      <span style="color:#445566;cursor:pointer;letter-spacing:1px"
-        onclick="openLoginModal()">
+    <div style="margin-bottom:20px">
+      <button onclick="openLoginModal()"
+        style="padding:10px 28px;background:transparent;border:1px solid #c8860a;
+               color:#c8860a;font-family:'Courier New',monospace;font-size:11px;
+               letter-spacing:2px;cursor:pointer;transition:all .15s"
+        onmouseover="this.style.background='rgba(200,134,10,.1)'"
+        onmouseout="this.style.background='transparent'">
         ACCEDER AU TERMINAL &rarr;
-      </span>
-      <span style="color:#1a1a1a;margin:0 12px">|</span>
-      <span style="color:#333">Deja inscrit ?
-        <span style="color:#445566;cursor:pointer" onclick="openLoginModal()">CONNEXION</span>
+      </button>
+    </div>
+    <div style="font-size:9px;color:#333;margin-bottom:14px">
+      Deja inscrit ?
+      <span style="color:#445566;cursor:pointer;margin-left:6px" onclick="openLoginModal()">
+        CONNEXION
       </span>
     </div>
     <div style="font-size:8px;color:#222;letter-spacing:1px">omnis.finance — Donnees temps reel</div>
