@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>OMNIS — Intelligence Mondiale</title>
+<title>OMNIS — Intelligence Financiere Institutionnelle</title>
+<meta name="description" content="OMNIS — Intelligence financiere institutionnelle. 30 actifs, signaux geopolitiques, maritime, aerien.">
+<meta property="og:title" content="OMNIS — Intelligence Financiere">
+<meta property="og:description" content="30 actifs analyses en temps reel. Geopolitique, maritime, donnees macro.">
+<meta property="og:url" content="https://omnis.finance">
+<link rel="canonical" href="https://omnis.finance">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 ::-webkit-scrollbar{width:3px;height:3px}
@@ -760,8 +765,7 @@ function switchTab(id,btn){
   if(id==='map'){
     setTimeout(()=>{
       const token=localStorage.getItem('omnis_token');
-      console.log('[MAP] Token disponible:', token ? 'OUI' : 'NON');
-      loadMaritimeData();
+            loadMaritimeData();
     }, 500);
   }
   if(id==='predictions') loadPredView();
@@ -871,8 +875,7 @@ async function doLogin(){
     if(d.token){
       localStorage.setItem('omnis_token', d.token);
       localStorage.setItem('omnis_user',  JSON.stringify(d.user));
-      console.log('[LOGIN] Token sauvegardé:', d.token.substring(0,20)+'...');
-      _currentUser=d.user;
+            _currentUser=d.user;
       _updateAuthUI();
       closeModal('login-modal');
       if(msg){msg.textContent='';}
@@ -927,14 +930,11 @@ async function startCheckout(){
   const token = localStorage.getItem('omnis_token')
              || localStorage.getItem('token')
              || localStorage.getItem('jwt');
-  console.log('[CHECKOUT] Token trouvé:', token ? token.substring(0,20)+'...' : 'AUCUN');
-  console.log('[CHECKOUT] Toutes les clés localStorage:', Object.keys(localStorage));
-  if(!token){ openLoginModal(); return; }
+      if(!token){ openLoginModal(); return; }
   const btn=document.getElementById('checkout-btn');
   const resetBtn = ()=>{ if(btn){btn.disabled=false;btn.textContent="S'abonner — 5€/mois";} };
   if(btn){btn.disabled=true;btn.textContent='Chargement...';}
-  console.log('[CHECKOUT] Appel API:', API_BASE);
-  try{
+    try{
     const ctrl = new AbortController();
     const timeout = setTimeout(()=>ctrl.abort(), 20000);   // 20s timeout
     const res = await fetch(API_BASE+'/api/billing/create-checkout',{
@@ -946,21 +946,18 @@ async function startCheckout(){
       },
     });
     clearTimeout(timeout);
-    console.log('[CHECKOUT] réponse HTTP:', res.status);
-    if(!res.ok){
+        if(!res.ok){
       const err = await res.json().catch(()=>({}));
       throw new Error(err.error || 'Erreur HTTP ' + res.status);
     }
     const data = await res.json();
-    console.log('[CHECKOUT] data:', data);
-    if(data.checkout_url){
+        if(data.checkout_url){
       window.location.href = data.checkout_url;
     } else {
       throw new Error(data.error || 'URL de paiement manquante');
     }
   } catch(e){
-    console.error('[CHECKOUT ERROR]', e);
-    const msg = e.name==='AbortError' ? 'Timeout — réessayez' : e.message;
+        const msg = e.name==='AbortError' ? 'Timeout — réessayez' : e.message;
     alert('Erreur paiement : ' + msg);
     resetBtn();
   }
@@ -976,8 +973,7 @@ async function openBillingPortal(){
 // ── Init session au chargement ─────────────────────────────────────────────
 (async function initAuth(){
   const tok = _tok();
-  console.log('[INIT] Token en localStorage:', tok ? 'OUI ('+tok.substring(0,15)+'...)' : 'NON');
-  // 1. Lecture cache localStorage (affichage immédiat sans attendre l'API)
+    // 1. Lecture cache localStorage (affichage immédiat sans attendre l'API)
   const cachedUser = JSON.parse(localStorage.getItem('omnis_user') || 'null');
   if(cachedUser && tok){ _currentUser=cachedUser; _updateAuthUI(); }
 
@@ -1020,8 +1016,7 @@ async function openBillingPortal(){
         });
         if(!r.ok) return false;
         const user=await r.json();
-        console.log('[PAYMENT] Profil rechargé:',user);
-        localStorage.setItem('omnis_user',JSON.stringify(user));
+                localStorage.setItem('omnis_user',JSON.stringify(user));
         _currentUser=user;
         _updateAuthUI();
         return user.plan==='premium';
@@ -1036,8 +1031,7 @@ async function openBillingPortal(){
         setTimeout(()=>{ if(toastEl) toastEl.style.display='none'; },6000);
       } else {
         // Tentative 2 — après 3s supplémentaires (webhook peut être lent)
-        console.log('[PAYMENT] Plan encore free, retry dans 3s…');
-        setTimeout(async ()=>{
+                setTimeout(async ()=>{
           const isPremium2=await _refreshPremiumProfile();
           if(toastMsg) toastMsg.textContent=isPremium2
             ? 'Bienvenue dans OMNIS Premium !'
@@ -1212,14 +1206,11 @@ async function loadCausalEvents(){
       const resp = await fetch(url, {signal:AbortSignal.timeout(15000)});
       if(!resp.ok){ console.warn('[Causal]',url,'→ HTTP',resp.status); continue; }
       const data = await resp.json();
-      console.log('[Causal] response from', url, ':', data);
-      const evs = Array.isArray(data) ? data : (data.events || data.detected || []);
-      console.log('[Causal] events found:', evs.length);
-      if(!evs.length){ console.log('[Causal] 0 événements sur',url,'— pas affiché'); continue; }
+            const evs = Array.isArray(data) ? data : (data.events || data.detected || []);
+            if(!evs.length){ console.log('[Causal] 0 événements sur',url,'— pas affiché'); continue; }
       // Diagnostic: combien ont des coords ?
       const withCoords = evs.filter(e=>_getCausalCoords(e));
-      console.log('[Causal] with coords:', withCoords.length, '/', evs.length);
-      causalEvents = evs;
+            causalEvents = evs;
       renderCausalEvents();
       return;
     } catch(e){ console.warn('[Causal]', url, e); }
@@ -1346,8 +1337,7 @@ function _debugPanel(){
 
 async function loadMaritimeData(){
   const token=localStorage.getItem('omnis_token');
-  console.log('[MARITIME] Token:', token ? token.substring(0,20)+'...' : 'ABSENT');
-  _mapDebug('⏳ Vols en cours...');
+    _mapDebug('⏳ Vols en cours...');
 
   // ── Phase 1 : vols en premier (ADSB.fi, rapide ~2-5s) ──────────
   try{
@@ -4004,6 +3994,165 @@ function _renderPredDetail(sig){
   <span style="color:#445566;font-size:9px;margin-right:8px">MKT</span>
   <span style="font-size:9px;color:#445566">Chargement...</span>
 </div>
+
+<!-- ══ LANDING PAGE ══ -->
+<div id="landing-page" style="display:none;position:fixed;inset:0;background:#000;z-index:10000;
+     font-family:'Courier New',monospace;overflow-y:auto;padding:0 0 80px">
+
+  <!-- Header -->
+  <div style="text-align:center;padding:60px 24px 40px">
+    <div style="font-size:36px;color:#c8860a;letter-spacing:8px;font-weight:700;margin-bottom:12px">OMNIS</div>
+    <div style="font-size:12px;color:#8a9ab0;letter-spacing:3px;margin-bottom:8px">INTELLIGENCE FINANCIERE INSTITUTIONNELLE</div>
+    <div style="font-size:9px;color:#445566;letter-spacing:2px">GEOPOLITIQUE // MARCHES // MARITIME // AERIEN</div>
+  </div>
+
+  <!-- Stats live -->
+  <div style="display:flex;justify-content:center;gap:32px;padding:16px 24px;
+       border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;margin-bottom:48px">
+    <div style="text-align:center">
+      <div style="font-size:18px;color:#c8860a">30</div>
+      <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">ACTIFS</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:18px;color:#c8860a" id="lp-rules">124</div>
+      <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">REGLES CAUSALES</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:18px;color:#c8860a" id="lp-vessels">—</div>
+      <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">NAVIRES SUIVIS</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:18px;color:#c8860a" id="lp-aircraft">—</div>
+      <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">AVIONS SURVEILLES</div>
+    </div>
+  </div>
+
+  <!-- Deux colonnes -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;max-width:800px;margin:0 auto 48px;
+       background:#1a1a1a">
+    <!-- Gratuit -->
+    <div style="background:#000;padding:28px 24px">
+      <div style="font-size:8px;color:#445566;letter-spacing:2px;margin-bottom:16px">// GRATUIT</div>
+      <div style="font-size:22px;color:#d4dce8;margin-bottom:20px">0 EUR</div>
+      <div style="font-size:9px;color:#8a9ab0;line-height:2.2;margin-bottom:24px">
+        <div>• 3 actifs (Or, Bitcoin, S&P 500)</div>
+        <div>• Signaux basiques</div>
+        <div>• Newsletter hebdomadaire</div>
+        <div style="color:#333">• Explications causales —</div>
+        <div style="color:#333">• MAP maritime / aerien —</div>
+        <div style="color:#333">• Alertes email —</div>
+      </div>
+      <button onclick="openRegisterModal()"
+        style="width:100%;padding:10px;background:#0a0a0a;border:1px solid #222;
+               color:#8a9ab0;font-family:'Courier New',monospace;font-size:9px;
+               cursor:pointer;letter-spacing:2px;transition:all .15s"
+        onmouseover="this.style.borderColor='#445566';this.style.color='#d4dce8'"
+        onmouseout="this.style.borderColor='#222';this.style.color='#8a9ab0'">
+        ACCES GRATUIT
+      </button>
+    </div>
+    <!-- Premium -->
+    <div style="background:#050505;padding:28px 24px;position:relative">
+      <div style="position:absolute;top:-1px;left:0;right:0;height:2px;background:#c8860a"></div>
+      <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:16px">// PREMIUM</div>
+      <div style="font-size:22px;color:#c8860a;margin-bottom:4px">5 EUR<span style="font-size:10px;color:#445566"> / mois</span></div>
+      <div style="font-size:8px;color:#445566;margin-bottom:20px">Resiliable a tout moment</div>
+      <div style="font-size:9px;color:#8a9ab0;line-height:2.2;margin-bottom:24px">
+        <div style="color:#3aaa6a">• 30 actifs complets</div>
+        <div style="color:#3aaa6a">• Explications causales detaillees</div>
+        <div style="color:#3aaa6a">• MAP maritime et aerienne</div>
+        <div style="color:#3aaa6a">• Alertes email temps reel</div>
+        <div style="color:#3aaa6a">• Newsletter quotidienne</div>
+        <div style="color:#3aaa6a">• Historique des predictions</div>
+      </div>
+      <button onclick="openRegisterModal()"
+        style="width:100%;padding:10px;background:#c8860a;border:none;
+               color:#000;font-family:'Courier New',monospace;font-size:9px;
+               cursor:pointer;letter-spacing:2px;font-weight:700;transition:opacity .15s"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        ESSAYER PREMIUM
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:0 24px">
+    <div style="font-size:9px;color:#333;margin-bottom:16px">
+      <span style="color:#445566;cursor:pointer;letter-spacing:1px"
+        onclick="openLoginModal()">
+        ACCEDER AU TERMINAL &rarr;
+      </span>
+      <span style="color:#1a1a1a;margin:0 12px">|</span>
+      <span style="color:#333">Deja inscrit ?
+        <span style="color:#445566;cursor:pointer" onclick="openLoginModal()">CONNEXION</span>
+      </span>
+    </div>
+    <div style="font-size:8px;color:#222;letter-spacing:1px">omnis.finance — Donnees temps reel</div>
+  </div>
+</div>
+
+<script>
+// Logique landing page : afficher si non connecté
+(function initLanding(){
+  const tok = localStorage.getItem('omnis_token');
+  const landing = document.getElementById('landing-page');
+  if(!landing) return;
+
+  if(!tok){
+    // Pas de token → landing directement
+    landing.style.display = 'block';
+    _loadLandingStats();
+    return;
+  }
+
+  // Token présent → vérifier validité
+  fetch(API_BASE + '/api/auth/me', {
+    headers: {Authorization: 'Bearer ' + tok},
+    signal: AbortSignal.timeout(5000),
+  }).then(r => {
+    if(!r.ok) throw new Error('invalid');
+    return r.json();
+  }).then(user => {
+    // Token valide → terminal (landing reste cachée)
+    landing.style.display = 'none';
+  }).catch(() => {
+    localStorage.removeItem('omnis_token');
+    localStorage.removeItem('omnis_user');
+    landing.style.display = 'block';
+    _loadLandingStats();
+  });
+})();
+
+// Masquer la landing après connexion réussie
+const _origUpdateAuthUI = window._updateAuthUI;
+window._updateAuthUI = function(){
+  if(typeof _origUpdateAuthUI === 'function') _origUpdateAuthUI.apply(this, arguments);
+  if(window._currentUser){
+    const lp = document.getElementById('landing-page');
+    if(lp) lp.style.display = 'none';
+  }
+};
+
+async function _loadLandingStats(){
+  try{
+    const r = await fetch(API_BASE + '/api/maritime/metrics', {signal: AbortSignal.timeout(8000)});
+    if(r.ok){
+      const d = await r.json();
+      const ve = document.getElementById('lp-vessels');
+      const ae = document.getElementById('lp-aircraft');
+      if(ve && d.vessels_total) ve.textContent = d.vessels_total;
+    }
+  } catch(e){}
+  try{
+    const r2 = await fetch(API_BASE + '/api/flights/zones', {signal: AbortSignal.timeout(8000)});
+    if(r2.ok){
+      const d2 = await r2.json();
+      const ae = document.getElementById('lp-aircraft');
+      if(ae && d2.total_aircraft) ae.textContent = d2.total_aircraft;
+    }
+  } catch(e){}
+}
+</script>
 
 </body>
 </html>
