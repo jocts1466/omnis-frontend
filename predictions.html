@@ -5,33 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>OMNIS — Prédictions</title>
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 /* ─────────────────────────────────────────────────────────────
-   OMNIS PRÉDICTIONS — Premium Dark UI
+   OMNIS PRÉDICTIONS — Terminal Bloomberg Style
 ───────────────────────────────────────────────────────────── */
 
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
 
 :root {
-  --bg:      #080c12;
-  --s1:      #0d1219;
-  --s2:      #111820;
-  --s3:      #161d28;
-  --border:  #1a2332;
-  --border2: #222c3a;
-  --text:    #c8d4e8;
-  --text2:   #7a8fa8;
-  --text3:   #3a4a5c;
-  --mono:    'DM Mono', monospace;
-  --sans:    'Space Grotesk', sans-serif;
-  --green:   #3dd68c;
-  --red:     #ff5555;
-  --yellow:  #f5a623;
-  --blue:    #4a9eff;
-  --purple:  #a855f7;
-  --cyan:    #06b6d4;
+  --bg:      #000000;
+  --s1:      #0a0a0a;
+  --s2:      #0f0f0f;
+  --s3:      #141414;
+  --border:  #1a1a1a;
+  --border2: #222222;
+  --text:    #d4dce8;
+  --text2:   #8a9ab0;
+  --text3:   #445566;
+  --accent:  #c8860a;
+  --gold:    #f5a623;
+  --green:   #3aaa6a;
+  --red:     #cc4444;
+  --mono:    'Courier New', monospace;
 }
 
 html, body {
@@ -39,7 +34,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
-  font-family: var(--sans);
+  font-family: var(--mono);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -77,9 +72,9 @@ html, body {
 }
 .filter-btn:hover { color: var(--text2); border-color: var(--border); background: var(--s2); }
 .filter-btn.active {
-  color: var(--blue);
-  border-color: rgba(74,158,255,0.3);
-  background: rgba(74,158,255,0.06);
+  color: var(--accent);
+  border-color: rgba(200,134,10,0.3);
+  background: rgba(200,134,10,0.06);
 }
 
 .filter-sep {
@@ -242,8 +237,8 @@ html, body {
   align-items: center;
   gap: 4px;
 }
-.dir-badge.haussier { color: var(--green); background: rgba(61,214,140,0.08);  border: 1px solid rgba(61,214,140,0.2); }
-.dir-badge.baissier { color: var(--red);   background: rgba(255,85,85,0.08);   border: 1px solid rgba(255,85,85,0.2); }
+.dir-badge.haussier { color: var(--green); background: rgba(58,170,106,0.08);  border: 1px solid rgba(58,170,106,0.2); }
+.dir-badge.baissier { color: var(--red);   background: rgba(204,68,68,0.08);   border: 1px solid rgba(204,68,68,0.2); }
 .dir-badge.neutre   { color: var(--text3); background: var(--s2);              border: 1px solid var(--border); }
 
 .prob-cell {
@@ -316,14 +311,14 @@ html, body {
 }
 
 #detail-title {
-  font-family: var(--sans);
-  font-size: 20px;
+  font-family: var(--mono);
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
   display: flex;
   align-items: center;
   gap: 12px;
-  letter-spacing: -0.3px;
+  letter-spacing: 1px;
 }
 
 #detail-signal {
@@ -342,8 +337,8 @@ html, body {
   font-weight: 500;
   letter-spacing: 1px;
 }
-.signal-pill.haussier { color: var(--green); background: rgba(61,214,140,0.1);  border: 1px solid rgba(61,214,140,0.3); }
-.signal-pill.baissier { color: var(--red);   background: rgba(255,85,85,0.1);   border: 1px solid rgba(255,85,85,0.3); }
+.signal-pill.haussier { color: var(--green); background: rgba(58,170,106,0.1);  border: 1px solid rgba(58,170,106,0.3); }
+.signal-pill.baissier { color: var(--red);   background: rgba(204,68,68,0.1);   border: 1px solid rgba(204,68,68,0.3); }
 .signal-pill.neutre   { color: var(--text2); background: var(--s2);             border: 1px solid var(--border); }
 
 .signal-meta {
@@ -420,7 +415,7 @@ html, body {
 .bloc {
   background: var(--s1);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 2px;
   overflow: hidden;
   min-height: 160px;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -497,14 +492,14 @@ html, body {
 
 /* ── Contradiction ── */
 .contradiction-warning {
-  background: rgba(245,166,35,0.07);
-  border: 1px solid rgba(245,166,35,0.25);
-  border-radius: 4px;
+  background: rgba(200,134,10,0.07);
+  border: 1px solid rgba(200,134,10,0.25);
+  border-radius: 2px;
   padding: 8px 12px;
   margin-bottom: 12px;
   font-family: var(--mono);
   font-size: 8px;
-  color: var(--yellow);
+  color: var(--accent);
   letter-spacing: 0.5px;
 }
 
@@ -522,7 +517,7 @@ html, body {
 .spinner {
   width: 20px; height: 20px;
   border: 1.5px solid var(--border2);
-  border-top-color: var(--blue);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
@@ -610,17 +605,17 @@ html, body {
       <div class="conf-section">
         <div class="conf-item">
           <div class="conf-label" id="label-data">DONNÉES</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-data" style="background:var(--blue)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-data" style="background:var(--accent)"></div></div>
           <div class="conf-val" id="val-data">—</div>
         </div>
         <div class="conf-item">
           <div class="conf-label" id="label-hist">HISTORIQUE</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-hist" style="background:var(--purple)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-hist" style="background:var(--text2)"></div></div>
           <div class="conf-val" id="val-hist">—</div>
         </div>
         <div class="conf-item">
           <div class="conf-label" id="label-cons">CONSENSUS</div>
-          <div class="conf-track"><div class="conf-fill" id="conf-cons" style="background:var(--cyan)"></div></div>
+          <div class="conf-track"><div class="conf-fill" id="conf-cons" style="background:var(--text3)"></div></div>
           <div class="conf-val" id="val-cons">—</div>
         </div>
         <div class="conf-item">

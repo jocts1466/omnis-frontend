@@ -4,38 +4,22 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>OMNIS — Intelligence Mondiale</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#222c3a;border-radius:2px}
+::-webkit-scrollbar-thumb{background:#222222;border-radius:2px}
 
 :root{
-  --bg:    #080c12;
-  --s1:    #0d1219;
-  --s2:    #111820;
-  --s3:    #161d28;
-  --border: #1a2332;
-  --border2:#222c3a;
-  --text:  #c8d4e8;
-  --text2: #7a8fa8;
-  --text3: #3a4a5c;
-  --mono:  'DM Mono',monospace;
-  --sans:  'Space Grotesk',sans-serif;
-  --green: #3dd68c;
-  --red:   #ff5555;
-  --yellow:#f5a623;
-  --blue:  #4a9eff;
-  --purple:#a855f7;
-  --cyan:  #06b6d4;
-  /* backward compat */
-  --accent:#4a9eff;
-  --gold:  #f5a623;
+  --bg:#000;--s1:#0a0a0a;--s2:#0f0f0f;--s3:#141414;
+  --border:#1a1a1a;--border2:#222222;
+  --text:#d4dce8;--text2:#8a9ab0;--text3:#445566;
+  --accent:#c8860a;--gold:#f5a623;--green:#3aaa6a;--red:#cc4444;
+  --mono:'Courier New',monospace;
 }
+*,*::before,*::after{font-family:var(--mono)}
 
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased}
 
 /* ── App layout ── */
 #app{display:flex;flex-direction:column;height:100vh}
@@ -68,12 +52,11 @@ nav{
   50%{opacity:.5;box-shadow:0 0 0 5px rgba(61,214,140,0)}
 }
 .nav-tab{
-  height:48px;padding:0 13px;border:none;background:none;cursor:pointer;
-  font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--text3);
-  border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
+  height:48px;padding:0 12px;border:none;background:transparent;cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;color:#445566;
 }
 .nav-tab:hover{color:var(--text2)}
-.nav-tab.active{color:var(--text);border-bottom-color:var(--blue)}
+.nav-tab.active{color:#c8860a}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
 .nav-time{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px}
 
@@ -151,7 +134,7 @@ nav{
   background:var(--s2);font-family:var(--mono);font-size:7px;color:var(--text3);
   cursor:pointer;transition:all .15s;text-align:center;white-space:nowrap;
 }
-.mf-btn.on{background:rgba(40,120,180,.15);border-color:#2878b4;color:#4a9eff}
+.mf-btn.on{background:rgba(200,134,10,.1);border-color:#c8860a44;color:#c8860a}
 .live-badge{
   position:absolute;top:8px;right:46px;
   background:rgba(20,50,20,.9);border:1px solid #3d8b3d;border-radius:3px;
@@ -209,54 +192,65 @@ nav{
 <body>
 <div id="app">
 
+<!-- STATUSBAR -->
+<div id="statusbar" style="background:#000;height:20px;display:flex;align-items:center;
+     padding:0 12px;gap:16px;border-bottom:1px solid #1a1a1a;flex-shrink:0">
+  <span style="display:flex;align-items:center;gap:4px;color:#c8860a;font-size:9px">
+    <span id="live-dot" style="width:5px;height:5px;border-radius:50%;background:#c8860a;
+          animation:pulse 2s infinite"></span>LIVE
+  </span>
+  <span id="sb-feeds"   style="color:#445566;font-size:9px">FEEDS —</span>
+  <span id="sb-vessels" style="color:#445566;font-size:9px">VESSELS —</span>
+  <span id="sb-aircraft"style="color:#445566;font-size:9px">AIRCRAFT —</span>
+  <span id="sb-rules"   style="color:#445566;font-size:9px">RULES 124</span>
+  <span style="margin-left:auto;color:#c8860a;font-size:9px" id="sb-clock"></span>
+</div>
+<style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}</style>
+
 <!-- NAV -->
 <nav>
   <div class="logo">
-    OMNIS
-    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+    <span style="font-family:var(--mono);font-size:11px;color:#c8860a;letter-spacing:4px;font-weight:700">OMNIS</span>
   </div>
   <button class="nav-tab active" onclick="switchTab('map',this)">MAP</button>
-  <button class="nav-tab" onclick="switchTab('predictions',this)">PRÉDICTIONS</button>
-  <button class="nav-tab" onclick="switchTab('marches',this)">MARCHÉS</button>
-  <button class="nav-tab" onclick="switchTab('briefing',this)">BRIEFING</button>
+  <button class="nav-tab" onclick="switchTab('predictions',this)">PRED</button>
+  <button class="nav-tab" onclick="switchTab('marches',this)">MKT</button>
+  <button class="nav-tab" onclick="switchTab('briefing',this)">BRIEF</button>
   <button class="nav-tab" onclick="switchTab('news',this)">NEWS</button>
-  <button class="nav-tab" onclick="switchTab('calendrier',this)">CALENDRIER</button>
-  <button class="nav-tab" onclick="switchTab('portfolio',this)">FAVORIS</button>
+  <button class="nav-tab" onclick="switchTab('calendrier',this)">CAL</button>
+  <button class="nav-tab" onclick="switchTab('portfolio',this)">PTF</button>
   <div style="width:1px;background:var(--border);margin:6px 4px;align-self:stretch"></div>
   <button onclick="openAlertModal()"
-    style="display:flex;align-items:center;gap:5px;background:rgba(74,158,255,.1);
-           border:1px solid rgba(74,158,255,.3);border-radius:4px;
-           color:#4a9eff;font-family:var(--mono);font-size:8px;cursor:pointer;
-           padding:5px 12px;letter-spacing:1px;white-space:nowrap;transition:all .15s;
-           margin:0 4px"
-    onmouseover="this.style.background='rgba(74,158,255,.2)'"
-    onmouseout="this.style.background='rgba(74,158,255,.1)'">
-    🔔 <span>ALERTES</span>
+    style="background:transparent;border:none;
+           color:#445566;font-family:var(--mono);font-size:9px;cursor:pointer;
+           padding:5px 12px;letter-spacing:2px;white-space:nowrap;
+           margin:0 4px">
+    ALERTS
   </button>
   <!-- Bouton Mon Compte (visible si connecté) -->
   <button id="nav-compte-tab" onclick="openAccountModal()" style="display:none;align-items:center;gap:6px;
-    background:var(--s2);border:1px solid var(--border);border-radius:4px;
+    background:var(--s2);border:1px solid var(--border);border-radius:2px;
     color:var(--text2);font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
     letter-spacing:.5px;transition:all .15s;margin:0 2px"
     onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">
     <span id="user-name-nav" style="color:var(--text2)">◈</span>
-    <span id="user-plan-badge" style="font-size:6px;color:#888">Gratuit</span>
+    <span id="user-plan-badge" style="font-size:6px;color:#888">FREE</span>
   </button>
   <!-- Bouton Passer Premium (visible si free) -->
   <button id="nav-premium-btn" onclick="openPricingModal()" style="display:none;align-items:center;gap:4px;
-    background:rgba(61,214,140,.1);border:1px solid rgba(61,214,140,.3);border-radius:4px;
-    color:var(--green);font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
+    background:transparent;border:1px solid #c8860a44;border-radius:2px;
+    color:#c8860a;font-family:var(--mono);font-size:7px;cursor:pointer;padding:4px 10px;
     letter-spacing:.5px;transition:all .15s;margin:0 2px"
-    onmouseover="this.style.background='rgba(61,214,140,.18)'" onmouseout="this.style.background='rgba(61,214,140,.1)'">
-    ⭐ PREMIUM
+    onmouseover="this.style.borderColor='#c8860a'" onmouseout="this.style.borderColor='#c8860a44'">
+    UPGRADE
   </button>
   <div id="user-nav" style="display:none"></div><!-- compat -->
   <button id="login-nav-btn" onclick="openLoginModal()"
-    style="background:var(--s2);border:1px solid var(--border2);border-radius:4px;
+    style="background:var(--s2);border:1px solid var(--border2);border-radius:2px;
            color:var(--text2);font-family:var(--mono);font-size:7px;cursor:pointer;
            padding:4px 10px;letter-spacing:1px;transition:all .15s"
     onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background='var(--s2)'">
-    CONNEXION
+    LOGIN
   </button>
   <div class="nav-right">
     <div class="nav-time" id="clock"></div>
@@ -271,7 +265,7 @@ nav{
     <button onclick="closeAlertModal()" style="position:absolute;top:12px;right:14px;
       background:none;border:none;color:#555;font-size:18px;cursor:pointer;line-height:1">×</button>
 
-    <h3 style="margin:0 0 4px;font-family:var(--mono);font-size:11px;color:#4a9eff;letter-spacing:2px">🔔 ALERTES EMAIL</h3>
+    <h3 style="margin:0 0 4px;font-family:var(--mono);font-size:11px;color:#c8860a;letter-spacing:2px">// ALERTS EMAIL</h3>
     <p style="margin:0 0 20px;font-size:11px;color:#666">Recevez une alerte quand un signal fort est détecté.</p>
 
     <div style="margin-bottom:14px">
@@ -355,9 +349,9 @@ nav{
       </select>
     </div>
     <div class="mf-wrap">
-      <div class="mf-btn on" id="mf-boats"  onclick="toggleMF('boats')"  >🚢 Bateaux</div>
-      <div class="mf-btn on" id="mf-planes" onclick="toggleMF('planes')" >✈️ Avions</div>
-      <div class="mf-btn on" id="mf-alerts" onclick="toggleMF('alerts')" >⚠️ Alertes</div>
+      <div class="mf-btn on" id="mf-boats"  onclick="toggleMF('boats')"  >// VESSELS</div>
+      <div class="mf-btn on" id="mf-planes" onclick="toggleMF('planes')" >// AIRCRAFT</div>
+      <div class="mf-btn on" id="mf-alerts" onclick="toggleMF('alerts')" >// ALERTS</div>
     </div>
     <div style="padding:5px 10px 6px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
       <span style="font-family:var(--mono);font-size:6px;color:#3dd68c">● Normal &lt;0.3</span>
@@ -743,14 +737,13 @@ function openAccountModal(){
   if(!m||!_currentUser) return;
   const isPrem = _currentUser.plan==='premium';
   document.getElementById('acc-info').innerHTML=
-    `<div style="margin-bottom:4px">👤 <b style="color:#fff">${_currentUser.name||''}</b></div>`+
-    `<div style="color:#666;font-size:9px;margin-bottom:8px">${_currentUser.email}</div>`+
-    `<div style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:8px;font-weight:700;`+
-    `background:${isPrem?'rgba(61,214,140,.12)':'rgba(255,255,255,.06)'};`+
-    `color:${isPrem?'var(--green)':'#888'};border:1px solid ${isPrem?'rgba(61,214,140,.3)':'#333'}">`+
-    `${isPrem?'✦ PREMIUM':'Gratuit'}</div>`;
+    `<div style="margin-bottom:3px;color:var(--text)">◆ ${_currentUser.name||''}</div>`+
+    `<div style="color:var(--text3);font-size:8px;margin-bottom:6px">${_currentUser.email}</div>`+
+    `<div style="font-size:8px;color:${isPrem?'#c8860a':'#445566'}">${isPrem?'PREMIUM':'FREE'}</div>`;
   document.getElementById('acc-premium-btn').style.display = isPrem?'none':'block';
   document.getElementById('acc-portal-btn').style.display  = isPrem?'block':'none';
+  const lastLogin = document.getElementById('acc-last-login');
+  if(lastLogin) lastLogin.textContent = 'Derniere connexion : '+(_currentUser.last_login||'—');
   m.style.display='flex';
 }
 
@@ -769,8 +762,8 @@ function _updateAuthUI(){
     const isPrem = _currentUser.plan === 'premium';
     if(nameEl)    nameEl.textContent = _currentUser.name || _currentUser.email;
     if(planBadge){
-      planBadge.textContent  = isPrem ? '✦ Premium' : 'Gratuit';
-      planBadge.style.color  = isPrem ? 'var(--green)' : '#888';
+      planBadge.textContent  = isPrem ? 'PREMIUM' : 'FREE';
+      planBadge.style.color  = isPrem ? '#c8860a' : '#445566';
     }
     if(premBtn)  premBtn.style.display = isPrem ? 'none' : 'inline-flex';
     if(acctTab)  acctTab.style.display = 'flex';
@@ -3321,20 +3314,106 @@ async function generateBriefing(){
 window.addEventListener('load',()=>{
   const s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
-  s.onload=()=>{ 
-    initMap(); 
+  s.onload=()=>{
+    initMap();
     loadIntelligence();
     // Auto-refresh
     setInterval(()=>loadIntelligence(), 15 * 60 * 1000);
     setInterval(()=>loadGdelt(), 30 * 60 * 1000);
     // Resize observer pour redessiner la courbe quand la fenêtre change
-    window.addEventListener('resize', ()=>{ 
+    window.addEventListener('resize', ()=>{
       if(document.getElementById('view-marches')?.classList.contains('active'))
         loadSignalHistorique();
     });
   };
   document.head.appendChild(s);
 });
+
+// ══ STATUSBAR ══
+function updateStatusbar(){
+  const now=new Date();
+  const el=document.getElementById('sb-clock');
+  if(el) el.textContent=now.toUTCString().slice(17,25)+' UTC';
+  const v=document.getElementById('sb-vessels');
+  const a=document.getElementById('sb-aircraft');
+  if(v&&maritimeData) v.textContent='VESSELS '+(maritimeData.vessels_total||'--');
+  if(a&&flightData)   a.textContent='AIRCRAFT '+(flightData.total_aircraft||'--');
+}
+setInterval(updateStatusbar, 1000);
+
+// ══ TICKER BAR ══
+async function updateTicker(){
+  try{
+    const r=await fetch(API_BASE+'/api/signal/all');
+    const d=await r.json();
+    const map={BRENT:'tk-brent',OR:'tk-or',SP500:'tk-sp500',BTC:'tk-btc',VIX:'tk-vix'};
+    (d.signals||[]).forEach(s=>{
+      const el=document.getElementById(map[s.symbol]);
+      if(!el) return;
+      const dir=s.direction==='HAUSSIER'?'▲':s.direction==='BAISSIER'?'▼':'';
+      const col=s.direction==='HAUSSIER'?'#3aaa6a':s.direction==='BAISSIER'?'#cc4444':'#8a9ab0';
+      el.style.color=col;
+      el.textContent=s.symbol+' '+dir+' '+s.probability+'%';
+    });
+  } catch(e){}
+}
+updateTicker();
+setInterval(updateTicker, 60000);
+
+// ══ CANCEL SUBSCRIPTION ══
+async function confirmCancel(){
+  if(!confirm('Confirmer la resiliation de votre abonnement Premium ?')) return;
+  try{
+    const r=await fetch(API_BASE+'/api/billing/cancel',{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('omnis_token')}});
+    const d=await r.json();
+    if(d.status==='ok'){
+      _currentUser.plan='free';
+      localStorage.setItem('omnis_user',JSON.stringify(_currentUser));
+      _updateAuthUI();
+      closeModal('account-modal');
+      alert('Abonnement resilie. Email de confirmation envoye.');
+    }
+  } catch(e){ alert('Erreur: '+e.message); }
+}
+
+// ══ CHANGE PASSWORD ══
+function openChangePassword(){
+  const html='<div style="position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9300;display:flex;align-items:center;justify-content:center">'
+    +'<div id="cpw-modal" style="background:#000;border:1px solid #1a1a1a;padding:24px;width:360px;max-width:95vw">'
+    +'<div style="font-size:9px;color:#c8860a;letter-spacing:2px;margin-bottom:16px">// MODIFIER MOT DE PASSE</div>'
+    +'<input id="cpw-cur" type="password" placeholder="Mot de passe actuel" style="width:100%;background:#0a0a0a;border:1px solid #1a1a1a;color:#d4dce8;padding:8px;font-family:var(--mono);font-size:10px;margin-bottom:8px;box-sizing:border-box"><br>'
+    +'<input id="cpw-new" type="password" placeholder="Nouveau mot de passe (8+ car.)" style="width:100%;background:#0a0a0a;border:1px solid #1a1a1a;color:#d4dce8;padding:8px;font-family:var(--mono);font-size:10px;margin-bottom:16px;box-sizing:border-box"><br>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="submitChangePassword()" style="flex:1;padding:8px;background:#c8860a;border:none;color:#000;font-family:var(--mono);font-size:9px;cursor:pointer;letter-spacing:1px">CONFIRMER</button>'
+    +'<button onclick="document.getElementById(\'cpw-modal\').parentElement.remove()" style="flex:1;padding:8px;background:#0a0a0a;border:1px solid #1a1a1a;color:#8a9ab0;font-family:var(--mono);font-size:9px;cursor:pointer">ANNULER</button>'
+    +'</div><div id="cpw-msg" style="margin-top:8px;font-size:9px;color:#8a9ab0"></div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+
+async function submitChangePassword(){
+  const cur=document.getElementById('cpw-cur')?.value;
+  const nw=document.getElementById('cpw-new')?.value;
+  const msg=document.getElementById('cpw-msg');
+  if(!cur||!nw){if(msg)msg.textContent='Champs requis.';return;}
+  try{
+    const r=await fetch(API_BASE+'/api/account/password',{method:'POST',
+      headers:{Authorization:'Bearer '+localStorage.getItem('omnis_token'),'Content-Type':'application/json'},
+      body:JSON.stringify({current_password:cur,new_password:nw})});
+    const d=await r.json();
+    if(msg)msg.textContent=d.message||d.error||'';
+    if(d.status==='ok') setTimeout(()=>document.getElementById('cpw-modal')?.parentElement?.remove(),1500);
+  } catch(e){if(msg)msg.textContent='Erreur reseau';}
+}
+
+async function toggleNewsletter(enabled){
+  try{
+    await fetch(API_BASE+'/api/account/newsletter?enabled='+enabled,{method:'POST',
+      headers:{Authorization:'Bearer '+localStorage.getItem('omnis_token')}});
+    const btn=document.getElementById('nl-btn');
+    if(btn){btn.textContent=enabled?'DESACTIVER':'ACTIVER';btn.onclick=()=>toggleNewsletter(!enabled);}
+  } catch(e){}
+}
 </script>
 
 </div>
@@ -3464,32 +3543,64 @@ window.addEventListener('load',()=>{
 </div>
 
 <!-- ══ MODAL COMPTE ══ -->
-<div id="account-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9200;align-items:center;justify-content:center">
-  <div style="background:#0d1117;border:1px solid #1e2530;border-radius:10px;padding:28px;width:360px;max-width:95vw;position:relative">
-    <button onclick="closeModal('account-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#444;font-size:20px;cursor:pointer;line-height:1">×</button>
-    <div style="font-family:var(--mono);font-size:9px;color:#4a9eff;letter-spacing:2px;margin-bottom:6px">◈ OMNIS</div>
-    <h3 style="margin:0 0 20px;font-size:16px;color:#fff;font-weight:700">Mon compte</h3>
-    <div id="acc-info" style="font-family:var(--mono);font-size:10px;color:#ccc;margin-bottom:20px;padding:14px;background:#080c12;border-radius:6px;border:1px solid #1e2530"></div>
-    <div id="acc-premium-btn" style="display:none;margin-bottom:10px">
-      <button id="acc-checkout-btn" onclick="startCheckout()"
-        style="width:100%;padding:10px;background:#3dd68c;border:none;border-radius:5px;color:#000;
-               font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:1px">
-        PASSER PREMIUM — 5€/MOIS ⭐
-      </button>
+<div id="account-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9200;align-items:center;justify-content:center">
+  <div style="background:#000;border:1px solid #1a1a1a;border-radius:2px;max-width:420px;width:95vw;position:relative;max-height:90vh;overflow-y:auto">
+    <button onclick="closeModal('account-modal')" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#445566;font-size:16px;cursor:pointer;line-height:1;font-family:var(--mono)">×</button>
+
+    <!-- Section 1: PROFIL -->
+    <div style="padding:18px 20px">
+      <div style="font-size:9px;color:#c8860a;letter-spacing:2px;margin-bottom:12px;font-family:var(--mono)">// PROFIL</div>
+      <div id="acc-info" style="font-family:var(--mono);font-size:9px;color:var(--text2);margin-bottom:12px;line-height:1.8"></div>
+      <button onclick="openChangePassword()" style="padding:6px 14px;background:var(--s2);border:1px solid var(--border);border-radius:2px;color:var(--text2);font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">MODIFIER MOT DE PASSE</button>
     </div>
-    <div id="acc-portal-btn" style="display:none;margin-bottom:10px">
-      <button onclick="openBillingPortal()"
-        style="width:100%;padding:9px;background:var(--s2);border:1px solid var(--border2);border-radius:5px;
-               color:var(--text2);font-family:var(--mono);font-size:9px;cursor:pointer">
-        GÉRER MON ABONNEMENT
-      </button>
+
+    <!-- Section 2: ABONNEMENT -->
+    <div style="border-top:1px solid #1a1a1a;padding:18px 20px">
+      <div style="font-size:9px;color:#c8860a;letter-spacing:2px;margin-bottom:12px;font-family:var(--mono)">// ABONNEMENT</div>
+      <div id="acc-premium-btn" style="display:none">
+        <button onclick="closeModal('account-modal');startCheckout()" style="width:100%;padding:9px;background:#c8860a;border:none;border-radius:2px;color:#000;font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;letter-spacing:1px">PASSER PREMIUM — 5EUR/MOIS</button>
+      </div>
+      <div id="acc-portal-btn" style="display:none">
+        <div style="font-family:var(--mono);font-size:9px;color:#c8860a;margin-bottom:10px">PREMIUM · 5EUR/MOIS</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openBillingPortal()" style="flex:1;padding:7px;background:var(--s2);border:1px solid var(--border);border-radius:2px;color:var(--text2);font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">GERER</button>
+          <button onclick="confirmCancel()" style="flex:1;padding:7px;background:transparent;border:1px solid #cc444444;border-radius:2px;color:#cc4444;font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">RESILIER</button>
+        </div>
+      </div>
     </div>
-    <button onclick="doLogout()"
-      style="width:100%;padding:9px;background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);
-             border-radius:5px;color:#e05252;font-family:var(--mono);font-size:9px;cursor:pointer;letter-spacing:1px">
-      SE DÉCONNECTER
-    </button>
+
+    <!-- Section 3: ALERTES -->
+    <div style="border-top:1px solid #1a1a1a;padding:18px 20px">
+      <div style="font-size:9px;color:#c8860a;letter-spacing:2px;margin-bottom:10px;font-family:var(--mono)">// ALERTES</div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--text2);margin-bottom:10px">Actifs surveilles : BRENT, OR, BTC, SP500</div>
+      <button onclick="closeModal('account-modal');openAlertModal()" style="padding:6px 14px;background:var(--s2);border:1px solid var(--border);border-radius:2px;color:var(--text2);font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">GERER LES ALERTES</button>
+    </div>
+
+    <!-- Section 4: NEWSLETTER -->
+    <div style="border-top:1px solid #1a1a1a;padding:18px 20px">
+      <div style="font-size:9px;color:#c8860a;letter-spacing:2px;margin-bottom:10px;font-family:var(--mono)">// NEWSLETTER</div>
+      <button id="nl-btn" onclick="toggleNewsletter(true)" style="padding:6px 14px;background:var(--s2);border:1px solid var(--border);border-radius:2px;color:var(--text2);font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">ACTIVER</button>
+    </div>
+
+    <!-- Section 5: SECURITE -->
+    <div style="border-top:1px solid #1a1a1a;padding:18px 20px">
+      <div style="font-size:9px;color:#c8860a;letter-spacing:2px;margin-bottom:10px;font-family:var(--mono)">// SECURITE</div>
+      <div id="acc-last-login" style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:12px">Derniere connexion : —</div>
+      <button onclick="doLogout()" style="padding:6px 14px;background:transparent;border:1px solid #cc444444;border-radius:2px;color:#cc4444;font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">SE DECONNECTER</button>
+    </div>
   </div>
+</div>
+
+<!-- ══ TICKER BAR ══ -->
+<div id="tickerbar" style="position:fixed;bottom:0;left:0;right:0;height:20px;
+     background:#000;border-top:1px solid #1a1a1a;display:flex;align-items:center;
+     padding:0 12px;gap:20px;z-index:8000;flex-shrink:0">
+  <span style="color:#445566;font-size:9px">MKT</span>
+  <span id="tk-brent" style="font-size:9px;color:#d4dce8">BRENT —</span>
+  <span id="tk-or"    style="font-size:9px;color:#d4dce8">OR —</span>
+  <span id="tk-sp500" style="font-size:9px;color:#d4dce8">SP500 —</span>
+  <span id="tk-btc"   style="font-size:9px;color:#d4dce8">BTC —</span>
+  <span id="tk-vix"   style="font-size:9px;color:#d4dce8">VIX —</span>
 </div>
 
 </body>
