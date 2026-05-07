@@ -478,53 +478,44 @@ nav{
 
   <!-- COL CENTRE : détail -->
   <div id="pred-center" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
-    <!-- Header actif sélectionné -->
-    <div id="pred-header" style="padding:12px 16px;background:#050505;border-bottom:1px solid #1a1a1a;flex-shrink:0">
-      <div id="pred-sym" style="font-size:8px;color:#445566;letter-spacing:2px;margin-bottom:6px">— // SIGNAL ACTIF</div>
-      <div style="display:flex;align-items:flex-start;gap:24px;margin-bottom:10px">
-        <div>
-          <span id="pred-price" style="font-size:28px;color:#c8860a;font-family:'Courier New',monospace">—</span>
-          <span id="pred-mom"   style="font-size:10px;color:#8a9ab0;margin-left:8px"></span>
-        </div>
-        <div style="margin-left:auto;display:flex;gap:20px">
-          <div style="text-align:right">
-            <div style="font-size:7px;color:#445566;letter-spacing:2px">SIGNAL</div>
-            <div id="pred-dir" style="font-size:11px;margin-top:3px">—</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:7px;color:#445566;letter-spacing:2px">HORIZON</div>
-            <div id="pred-horizon" style="font-size:11px;color:#8a9ab0;margin-top:3px">—</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:7px;color:#445566;letter-spacing:2px">AMPLITUDE</div>
-            <div id="pred-amp" style="font-size:11px;color:#8a9ab0;margin-top:3px">—</div>
-          </div>
+    <!-- PARTIE HAUTE : infos + TradingView (280px) -->
+    <div style="height:280px;flex-shrink:0;display:flex;flex-direction:column;border-bottom:1px solid #1a1a1a">
+      <!-- Bande info signal -->
+      <div id="pred-header" style="padding:7px 14px;background:#050505;border-bottom:1px solid #1a1a1a;
+           display:flex;align-items:center;gap:16px;flex-shrink:0">
+        <div id="pred-sym"  style="font-size:9px;color:#445566;letter-spacing:2px">—</div>
+        <div id="pred-dir"  style="font-size:10px">—</div>
+        <div id="pred-prob" style="font-size:16px;color:#c8860a;font-weight:700">—</div>
+        <div style="display:flex;gap:14px;margin-left:auto;font-size:8px">
+          <span style="color:#445566">HORIZON <span id="pred-horizon" style="color:#8a9ab0">—</span></span>
+          <span style="color:#445566">AMP <span id="pred-amp" style="color:#8a9ab0">—</span></span>
         </div>
       </div>
-      <svg id="pred-spark" width="100%" height="52" viewBox="0 0 600 52" preserveAspectRatio="none"></svg>
+      <!-- TradingView widget -->
+      <div id="pred-tv-container" style="flex:1;background:#000;overflow:hidden"></div>
     </div>
-    <!-- Grille 2x2 -->
+    <!-- PARTIE BASSE : grille 2x2 -->
     <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
          gap:1px;background:#1a1a1a;overflow:hidden">
       <!-- Q1 : CAUSES -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// CAUSES PRINCIPALES</div>
-        <div id="pred-causes" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// CAUSES PRINCIPALES</div>
+        <div id="pred-causes" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
       <!-- Q2 : MACRO -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// DONNEES MACRO</div>
-        <div id="pred-macro" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// DONNEES MACRO</div>
+        <div id="pred-macro" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
-      <!-- Q3 : CORRELES -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// ACTIFS CORRELES</div>
-        <div id="pred-corr" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <!-- Q3 : MARITIME -->
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// MARITIME // ZONES</div>
+        <div id="pred-maritime" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
-      <!-- Q4 : MARITIME -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// MARITIME // ZONES</div>
-        <div id="pred-maritime" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <!-- Q4 : CORRELES -->
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// ACTIFS CORRELES</div>
+        <div id="pred-corr" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
     </div>
   </div>
@@ -3420,24 +3411,76 @@ function updateStatusbar(){
 }
 setInterval(updateStatusbar, 1000);
 
-// ══ TICKER BAR ══
+// ══ TRADINGVIEW PRED ══
+let _predTVLoaded = false;
+function _buildPredTV(tvSym){
+  const container = document.getElementById('pred-tv-container');
+  if(!container) return;
+  container.innerHTML = '<div id="pred_tv_inner" style="width:100%;height:100%"></div>';
+  function _create(){
+    if(!window.TradingView) return;
+    new TradingView.widget({
+      container_id: 'pred_tv_inner',
+      autosize: true,
+      symbol: tvSym,
+      interval: '240',
+      timezone: 'Etc/UTC',
+      theme: 'dark',
+      style: '1',
+      locale: 'fr',
+      backgroundColor: '#000000',
+      gridColor: '#1a1a1a',
+      toolbar_bg: '#050505',
+      enable_publishing: false,
+      hide_side_toolbar: false,
+      allow_symbol_change: false,
+      save_image: false,
+      hide_legend: false,
+    });
+  }
+  if(window.TradingView){ _create(); return; }
+  if(!_predTVLoaded){
+    _predTVLoaded = true;
+    const s = document.createElement('script');
+    s.src = 'https://s3.tradingview.com/tv.js';
+    s.async = true;
+    s.onload = _create;
+    document.head.appendChild(s);
+  } else {
+    setTimeout(_create, 800);
+  }
+}
+
+// ══ TICKER BAR — top movers dynamiques ══
 async function updateTicker(){
   try{
-    const r=await fetch(API_BASE+'/api/signal/all');
-    const d=await r.json();
-    const map={BRENT:'tk-brent',OR:'tk-or',SP500:'tk-sp500',BTC:'tk-btc',VIX:'tk-vix'};
-    (d.signals||[]).forEach(s=>{
-      const el=document.getElementById(map[s.symbol]);
-      if(!el) return;
-      const dir=s.direction==='HAUSSIER'?'▲':s.direction==='BAISSIER'?'▼':'';
-      const col=s.direction==='HAUSSIER'?'#3aaa6a':s.direction==='BAISSIER'?'#cc4444':'#8a9ab0';
-      el.style.color=col;
-      el.textContent=s.symbol+' '+dir+' '+s.probability+'%';
+    const tok = localStorage.getItem('omnis_token');
+    const tokParam = tok ? '&token=' + encodeURIComponent(tok) : '';
+    const r = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokParam);
+    const d = await r.json();
+    const sigs = (d.signals || [])
+      .filter(s => s.direction !== 'NEUTRE' && s.probability > 0)
+      .sort((a,b) => b.probability - a.probability)
+      .slice(0, 8);
+
+    const bar = document.getElementById('tickerbar');
+    if(!bar) return;
+    // Garder le label MKT et reconstruire les spans
+    let html = '<span style="color:#445566;font-size:9px;margin-right:8px">MKT</span>';
+    sigs.forEach(s => {
+      const dir = s.direction === 'HAUSSIER' ? '▲' : '▼';
+      const col = s.direction === 'HAUSSIER' ? '#3aaa6a' : '#cc4444';
+      html += `<span style="font-size:9px;color:${col};margin-right:16px">${s.symbol} ${dir} ${s.probability}%</span>`;
     });
+    if(sigs.length === 0){
+      // Fallback signaux fixes si pas encore chargés
+      html += '<span style="font-size:9px;color:#445566">Chargement...</span>';
+    }
+    bar.innerHTML = html;
   } catch(e){}
 }
 updateTicker();
-setInterval(updateTicker, 60000);
+setInterval(updateTicker, 5*60*1000);  // 5 minutes
 
 // ══ CANCEL SUBSCRIPTION ══
 async function confirmCancel(){
@@ -3552,61 +3595,38 @@ function _renderPredDetail(sig){
   const dirCol = sig.direction === 'HAUSSIER' ? '#3aaa6a' : sig.direction === 'BAISSIER' ? '#cc4444' : '#445566';
   const prob   = sig.probability || 0;
 
-  // Header — nom actif
+  // Bande info
   const symEl = document.getElementById('pred-sym');
-  if(symEl) symEl.textContent = sig.symbol + ' // ' + (sig.name_fr || sig.symbol).toUpperCase() + ' // SIGNAL ACTIF';
-
-  // Header — prix (Polygon si dispo, sinon placeholder)
-  const priceEl = document.getElementById('pred-price');
-  const polyPrice = sig.polygon_price || sig.prix_actuel || sig.close;
-  if(priceEl) priceEl.textContent = polyPrice ? '$' + parseFloat(polyPrice).toFixed(2) : '—';
-
-  // Header — momentum 7j
-  const momEl = document.getElementById('pred-mom');
-  if(momEl){
-    const mom = sig.momentum_7j || sig.momentum;
-    if(mom !== undefined && mom !== null){
-      const momCol = mom >= 0 ? '#3aaa6a' : '#cc4444';
-      momEl.innerHTML = `<span style="color:${momCol}">${mom >= 0 ? '+' : ''}${parseFloat(mom).toFixed(2)}% (7j)</span>`;
-    } else {
-      momEl.textContent = '';
-    }
-  }
-
-  // Header — direction + prob
+  if(symEl) symEl.textContent = sig.symbol + ' // ' + (sig.name_fr || sig.symbol).toUpperCase();
   const dirEl = document.getElementById('pred-dir');
-  if(dirEl) dirEl.innerHTML = `<span style="color:${dirCol}">${dirSym} ${prob}%</span>`;
-
-  // Header — horizon
+  if(dirEl) dirEl.innerHTML = `<span style="color:${dirCol}">${dirSym}</span>`;
+  const probEl = document.getElementById('pred-prob');
+  if(probEl) probEl.textContent = prob + '%';
   const horizEl = document.getElementById('pred-horizon');
   if(horizEl){
     const dmin = sig.delay_min || sig.delay_days_min || '?';
     const dmax = sig.delay_max || sig.delay_days_max || '?';
-    horizEl.textContent = `J+${dmin} — J+${dmax}`;
+    horizEl.textContent = `J+${dmin}—J+${dmax}`;
   }
-
-  // Header — amplitude
   const ampEl = document.getElementById('pred-amp');
   if(ampEl){
-    const amin = sig.amplitude_min != null ? sig.amplitude_min.toFixed(1) : '?';
-    const amax = sig.amplitude_max != null ? sig.amplitude_max.toFixed(1) : '?';
-    ampEl.textContent = `+${amin} — +${amax}%`;
+    const amin = sig.amplitude_min != null ? parseFloat(sig.amplitude_min).toFixed(1) : '?';
+    const amax = sig.amplitude_max != null ? parseFloat(sig.amplitude_max).toFixed(1) : '?';
+    ampEl.textContent = `+${amin}—+${amax}%`;
   }
 
-  // Sparkline SVG
-  const spark = document.getElementById('pred-spark');
-  if(spark){
-    const isUp = sig.direction === 'HAUSSIER';
-    const lineCol = isUp ? '#c8860a' : '#cc4444';
-    const pts = isUp
-      ? '0,48 80,42 160,36 240,30 320,22 400,16 480,10 600,6'
-      : '0,6 80,10 160,16 240,22 320,30 400,36 480,42 600,48';
-    spark.innerHTML = `
-      <polyline points="${pts}" fill="none" stroke="${lineCol}" stroke-width="1.5" opacity=".9"/>
-      <polyline points="${pts} 600,52 0,52" fill="${lineCol}" fill-opacity=".06" stroke="none"/>
-      <line x1="0" y1="26" x2="600" y2="26" stroke="#1a1a1a" stroke-width=".5" stroke-dasharray="4,4"/>
-    `;
-  }
+  // TradingView widget
+  const _TV_MAP = {
+    BRENT:'TVC:UKOIL', WTI:'TVC:USOIL', OR:'TVC:GOLD', ARGENT:'TVC:SILVER',
+    CUIVRE:'TVC:COPPER', GAZ_EU:'TVC:NATURALGAS', GAZ_US:'TVC:NATURALGAS',
+    SP500:'SP:SPX', CAC40:'EURONEXT:PX1', VIX:'TVC:VIX', DXY:'TVC:DXY',
+    EURUSD:'FX:EURUSD', BTC:'BINANCE:BTCUSDT', ETH:'BINANCE:ETHUSDT',
+    BLE:'CBOT:ZW1!', MAIS:'CBOT:ZC1!', SOJA:'CBOT:ZS1!',
+    CAFE:'ICEUS:KC1!', CACAO:'ICEUS:CC1!', LITHIUM:'AMEX:LIT',
+    URANIUM:'AMEX:URA', SOX:'NASDAQ:SOX', NICKEL:'COMEX:HG1!',
+  };
+  const tvSym = _TV_MAP[sig.symbol] || sig.symbol;
+  _buildPredTV(tvSym);
 
   // Q1 : Causes
   const comps = (sig.components || []).filter(c => c.force > 0.3).slice(0, 4);
@@ -3883,13 +3903,9 @@ function _renderPredDetail(sig){
 <!-- ══ TICKER BAR ══ -->
 <div id="tickerbar" style="position:fixed;bottom:0;left:0;right:0;height:20px;
      background:#000;border-top:1px solid #1a1a1a;display:flex;align-items:center;
-     padding:0 12px;gap:20px;z-index:8000;flex-shrink:0">
-  <span style="color:#445566;font-size:9px">MKT</span>
-  <span id="tk-brent" style="font-size:9px;color:#d4dce8">BRENT —</span>
-  <span id="tk-or"    style="font-size:9px;color:#d4dce8">OR —</span>
-  <span id="tk-sp500" style="font-size:9px;color:#d4dce8">SP500 —</span>
-  <span id="tk-btc"   style="font-size:9px;color:#d4dce8">BTC —</span>
-  <span id="tk-vix"   style="font-size:9px;color:#d4dce8">VIX —</span>
+     padding:0 12px;z-index:8000;flex-shrink:0;overflow:hidden">
+  <span style="color:#445566;font-size:9px;margin-right:8px">MKT</span>
+  <span style="font-size:9px;color:#445566">Chargement...</span>
 </div>
 
 </body>
