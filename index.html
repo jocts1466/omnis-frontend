@@ -831,6 +831,9 @@ function _updateAuthUI(){
   const acctTab    = document.getElementById('nav-compte-tab');
 
   if(_currentUser){
+    // Masquer la landing, afficher le terminal
+    const lp = document.getElementById('landing-page');
+    if(lp) lp.style.display = 'none';
     if(loginBtn) loginBtn.style.display='none';
     if(userNav)  userNav.style.display='flex';
     const isPrem = _currentUser.plan === 'premium';
@@ -905,8 +908,17 @@ async function doRegister(){
       body:JSON.stringify({email,password:pass,name})});
     const d=await r.json();
     if(d.message){
-      if(msg){msg.style.color='#3dd68c';msg.textContent='✓ '+d.message;}
+      // Succès : rester sur la modal, afficher le message de vérification email
+      if(msg){
+        msg.style.display='block';
+        msg.style.color='#3dd68c';
+        msg.innerHTML = 'Verifiez votre email pour activer votre compte.<br>'
+          + '<span style="font-size:8px;color:#8a9ab0">Puis revenez ici pour vous connecter.</span>';
+      }
       if(btn) btn.style.display='none';
+      // Afficher un lien vers le login
+      const switchEl = document.getElementById('reg-switch-login');
+      if(switchEl) switchEl.style.display='block';
     } else {
       if(msg){msg.style.color='#e05252';msg.textContent=d.error||'Erreur';}
     }
@@ -3934,6 +3946,13 @@ function _renderPredDetail(sig){
     <div style="text-align:center;font-family:var(--mono);font-size:8px;color:#444">
       Déjà un compte ?
       <span onclick="closeModal('register-modal');openLoginModal()" style="color:#4a9eff;cursor:pointer;margin-left:4px">Se connecter</span>
+    </div>
+    <div id="reg-switch-login" style="display:none;margin-top:12px;text-align:center;
+         font-family:var(--mono);font-size:9px;color:#445566">
+      <span onclick="closeModal('register-modal');openLoginModal()"
+        style="color:#c8860a;cursor:pointer;letter-spacing:1px">
+        SE CONNECTER &rarr;
+      </span>
     </div>
   </div>
 </div>
