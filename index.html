@@ -11,7 +11,7 @@
 ::-webkit-scrollbar-thumb{background:#222222;border-radius:2px}
 
 :root{
-  --bg:#000;--s1:#0a0a0a;--s2:#0f0f0f;--s3:#141414;
+  --bg:#000000;--s1:#050505;--s2:#0a0a0a;--s3:#0f0f0f;
   --border:#1a1a1a;--border2:#222222;
   --text:#d4dce8;--text2:#8a9ab0;--text3:#445566;
   --accent:#c8860a;--gold:#f5a623;--green:#3aaa6a;--red:#cc4444;
@@ -478,36 +478,44 @@ nav{
 
   <!-- COL CENTRE : détail -->
   <div id="pred-center" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
-    <!-- Header actif sélectionné -->
-    <div id="pred-header" style="padding:10px 14px;border-bottom:1px solid #1a1a1a;display:flex;
-         align-items:center;gap:16px;flex-shrink:0;background:#000">
-      <span id="pred-sym"   style="font-size:14px;color:#d4dce8;font-weight:700;letter-spacing:2px">—</span>
-      <span id="pred-price" style="font-size:11px;color:#8a9ab0">—</span>
-      <span id="pred-dir"   style="font-size:11px">—</span>
-      <span id="pred-prob"  style="font-size:18px;color:#c8860a;font-weight:700;margin-left:auto">—</span>
+    <!-- PARTIE HAUTE : infos + TradingView (280px) -->
+    <div style="height:280px;flex-shrink:0;display:flex;flex-direction:column;border-bottom:1px solid #1a1a1a">
+      <!-- Bande info signal -->
+      <div id="pred-header" style="padding:7px 14px;background:#050505;border-bottom:1px solid #1a1a1a;
+           display:flex;align-items:center;gap:16px;flex-shrink:0">
+        <div id="pred-sym"  style="font-size:9px;color:#445566;letter-spacing:2px">—</div>
+        <div id="pred-dir"  style="font-size:10px">—</div>
+        <div id="pred-prob" style="font-size:16px;color:#c8860a;font-weight:700">—</div>
+        <div style="display:flex;gap:14px;margin-left:auto;font-size:8px">
+          <span style="color:#445566">HORIZON <span id="pred-horizon" style="color:#8a9ab0">—</span></span>
+          <span style="color:#445566">AMP <span id="pred-amp" style="color:#8a9ab0">—</span></span>
+        </div>
+      </div>
+      <!-- TradingView widget -->
+      <div id="pred-tv-container" style="flex:1;background:#000;overflow:hidden"></div>
     </div>
-    <!-- Grille 2x2 -->
+    <!-- PARTIE BASSE : grille 2x2 -->
     <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
          gap:1px;background:#1a1a1a;overflow:hidden">
       <!-- Q1 : CAUSES -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// CAUSES PRINCIPALES</div>
-        <div id="pred-causes" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// CAUSES PRINCIPALES</div>
+        <div id="pred-causes" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
       <!-- Q2 : MACRO -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// DONNEES MACRO</div>
-        <div id="pred-macro" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// DONNEES MACRO</div>
+        <div id="pred-macro" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
-      <!-- Q3 : CORRELES -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// ACTIFS CORRELES</div>
-        <div id="pred-corr" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <!-- Q3 : MARITIME -->
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// MARITIME // ZONES</div>
+        <div id="pred-maritime" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
-      <!-- Q4 : MARITIME -->
-      <div style="background:#000;padding:12px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:10px">// MARITIME // ZONES</div>
-        <div id="pred-maritime" style="font-size:10px;color:#8a9ab0;line-height:2">—</div>
+      <!-- Q4 : CORRELES -->
+      <div style="background:#000;padding:10px;overflow-y:auto">
+        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// ACTIFS CORRELES</div>
+        <div id="pred-corr" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
       </div>
     </div>
   </div>
@@ -3403,24 +3411,133 @@ function updateStatusbar(){
 }
 setInterval(updateStatusbar, 1000);
 
-// ══ TICKER BAR ══
+// ══ TRADINGVIEW PRED ══
+// ══ GRAPHIQUE YAHOO FINANCE SVG ══
+const _YAHOO_MAP = {
+  BRENT:'BZ=F', WTI:'CL=F', OR:'GC=F', ARGENT:'SI=F',
+  GAZ_EU:'TTF=F', GAZ_US:'NG=F', CUIVRE:'HG=F',
+  SP500:'^GSPC', CAC40:'^FCHI', VIX:'^VIX',
+  BTC:'BTC-USD', ETH:'ETH-USD', EURUSD:'EURUSD=X', DXY:'DX-Y.NYB',
+  BLE:'ZW=F', MAIS:'ZC=F', SOJA:'ZS=F', CAFE:'KC=F', CACAO:'CC=F',
+  LITHIUM:'LIT', URANIUM:'URA', SOX:'^SOX', US10Y:'^TNX',
+  CNH:'CNH=X', BRL:'BRL=X', INR:'INR=X', CHARBON:'KOL', NICKEL:'NI=F',
+};
+
+function _drawPredChart(prices, direction, containerId){
+  const container = document.getElementById(containerId);
+  if(!container || !prices || prices.length < 2) return;
+  const W = 800, H = 160, PAD = {t:10, r:55, b:28, l:8};
+  const vals = prices.map(p => p.v);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const rng = mx - mn || 1;
+  const col = direction === 'HAUSSIER' ? '#c8860a' : '#cc4444';
+  const toX = i => PAD.l + (i / (prices.length-1)) * (W - PAD.l - PAD.r);
+  const toY = v => PAD.t + (1 - (v - mn) / rng) * (H - PAD.t - PAD.b);
+
+  const pts  = prices.map((p,i) => `${toX(i).toFixed(1)},${toY(p.v).toFixed(1)}`).join(' ');
+  const poly = `${pts} ${toX(prices.length-1).toFixed(1)},${H-PAD.b} ${toX(0).toFixed(1)},${H-PAD.b}`;
+
+  // Grilles horizontales (4 lignes)
+  const gridLines = [0.25,0.5,0.75].map(r => {
+    const y = (PAD.t + r*(H-PAD.t-PAD.b)).toFixed(1);
+    return `<line x1="${PAD.l}" y1="${y}" x2="${W-PAD.r}" y2="${y}" stroke="#1a1a1a" stroke-width="0.5" stroke-dasharray="3,3"/>`;
+  }).join('');
+
+  // Labels prix à droite
+  const priceLabels = [mn, (mn+mx)/2, mx].map(v => {
+    const y = toY(v).toFixed(1);
+    const lbl = v > 1000 ? v.toFixed(0) : v > 10 ? v.toFixed(2) : v.toFixed(4);
+    return `<text x="${W-PAD.r+4}" y="${y}" fill="#445566" font-size="8" dominant-baseline="middle" font-family="'Courier New',monospace">${lbl}</text>`;
+  }).join('');
+
+  // Ligne prix actuel en pointillés
+  const lastY = toY(vals[vals.length-1]).toFixed(1);
+  const lastVal = vals[vals.length-1];
+  const lastLbl = lastVal > 1000 ? lastVal.toFixed(0) : lastVal > 10 ? lastVal.toFixed(2) : lastVal.toFixed(4);
+
+  // Labels dates (5 points équidistants)
+  const step = Math.floor(prices.length / 5);
+  const dateLabels = [0,1,2,3,4].map(i => {
+    const idx = Math.min(i*step, prices.length-1);
+    const x = toX(idx).toFixed(1);
+    const d = new Date(prices[idx].t);
+    const lbl = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+    return `<text x="${x}" y="${H-6}" fill="#333" font-size="7" text-anchor="middle" font-family="'Courier New',monospace">${lbl}</text>`;
+  }).join('');
+
+  container.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
+    ${gridLines}
+    <polygon points="${poly}" fill="${col}" fill-opacity="0.05"/>
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <line x1="${PAD.l}" y1="${lastY}" x2="${W-PAD.r}" y2="${lastY}" stroke="${col}" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+    <text x="${W-PAD.r+4}" y="${lastY}" fill="${col}" font-size="8" dominant-baseline="middle" font-weight="bold" font-family="'Courier New',monospace">${lastLbl}</text>
+    ${priceLabels}
+    ${dateLabels}
+  </svg>`;
+}
+
+async function _loadPredChart(omnisSym, direction){
+  const container = document.getElementById('pred-tv-container');
+  if(!container) return;
+  container.innerHTML = '<div style="color:#445566;font-size:9px;padding:8px;font-family:\'Courier New\'">Chargement...</div>';
+  const yTicker = _YAHOO_MAP[omnisSym] || omnisSym;
+  const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yTicker)}?interval=4h&range=10d`;
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  try{
+    const resp = await fetch(proxy, {signal: AbortSignal.timeout(12000)});
+    const raw  = await resp.json();
+    const json = JSON.parse(raw.contents);
+    const res  = json.chart.result[0];
+    const timestamps = res.timestamp;
+    const closes     = res.indicators.quote[0].close;
+    const prices = timestamps
+      .map((t,i) => ({t: t*1000, v: closes[i]}))
+      .filter(p => p.v !== null && !isNaN(p.v));
+    if(prices.length < 2) throw new Error('Pas assez de données');
+    _drawPredChart(prices, direction, 'pred-tv-container');
+  } catch(e){
+    if(container) container.innerHTML = `<div style="color:#333;font-size:9px;padding:8px;font-family:'Courier New'">${omnisSym} — données indisponibles</div>`;
+  }
+}
+
+let _chartRefreshTimer = null;
+
+// ══ TICKER BAR — top movers par |variation_1j| ══
 async function updateTicker(){
   try{
-    const r=await fetch(API_BASE+'/api/signal/all');
-    const d=await r.json();
-    const map={BRENT:'tk-brent',OR:'tk-or',SP500:'tk-sp500',BTC:'tk-btc',VIX:'tk-vix'};
-    (d.signals||[]).forEach(s=>{
-      const el=document.getElementById(map[s.symbol]);
-      if(!el) return;
-      const dir=s.direction==='HAUSSIER'?'▲':s.direction==='BAISSIER'?'▼':'';
-      const col=s.direction==='HAUSSIER'?'#3aaa6a':s.direction==='BAISSIER'?'#cc4444':'#8a9ab0';
-      el.style.color=col;
-      el.textContent=s.symbol+' '+dir+' '+s.probability+'%';
+    const tok = localStorage.getItem('omnis_token');
+    const tokParam = tok ? '&token=' + encodeURIComponent(tok) : '';
+    const r = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokParam);
+    const d = await r.json();
+    const sigs = (d.signals || [])
+      .filter(s => s.direction !== 'NEUTRE')
+      .map(s => ({
+        ...s,
+        // Utiliser momentum_1j si dispo, sinon probability comme proxy de mouvement
+        _mov: Math.abs(s.momentum_1j || s.price_change || s.probability || 0),
+      }))
+      .sort((a,b) => b._mov - a._mov)
+      .slice(0, 8);
+
+    const bar = document.getElementById('tickerbar');
+    if(!bar) return;
+    let html = '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px;flex-shrink:0">MKT</span>';
+    sigs.forEach(s => {
+      const isUp  = s.direction === 'HAUSSIER';
+      const dir   = isUp ? '▲' : '▼';
+      const col   = isUp ? '#3aaa6a' : '#cc4444';
+      const mov   = s.momentum_1j != null
+        ? `${s.momentum_1j >= 0 ? '+' : ''}${parseFloat(s.momentum_1j).toFixed(2)}%`
+        : `${s.probability}%`;
+      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">`
+            + `${s.symbol} ${dir}${mov}</span>`;
     });
+    if(!sigs.length) html += '<span style="font-size:9px;color:#333">--</span>';
+    bar.innerHTML = html;
   } catch(e){}
 }
 updateTicker();
-setInterval(updateTicker, 60000);
+setInterval(updateTicker, 5*60*1000);
 
 // ══ CANCEL SUBSCRIPTION ══
 async function confirmCancel(){
@@ -3531,13 +3648,34 @@ function _selectPredAsset(sym){
 }
 
 function _renderPredDetail(sig){
-  // Header
   const dirSym = sig.direction === 'HAUSSIER' ? '▲ HAUSSIER' : sig.direction === 'BAISSIER' ? '▼ BAISSIER' : '- NEUTRE';
   const dirCol = sig.direction === 'HAUSSIER' ? '#3aaa6a' : sig.direction === 'BAISSIER' ? '#cc4444' : '#445566';
-  document.getElementById('pred-sym').textContent   = sig.symbol;
-  document.getElementById('pred-price').textContent = sig.name_fr || sig.symbol;
-  document.getElementById('pred-dir').innerHTML     = `<span style="color:${dirCol}">${dirSym}</span>`;
-  document.getElementById('pred-prob').textContent  = (sig.probability || 0) + '%';
+  const prob   = sig.probability || 0;
+
+  // Bande info
+  const symEl = document.getElementById('pred-sym');
+  if(symEl) symEl.textContent = sig.symbol + ' // ' + (sig.name_fr || sig.symbol).toUpperCase();
+  const dirEl = document.getElementById('pred-dir');
+  if(dirEl) dirEl.innerHTML = `<span style="color:${dirCol}">${dirSym}</span>`;
+  const probEl = document.getElementById('pred-prob');
+  if(probEl) probEl.textContent = prob + '%';
+  const horizEl = document.getElementById('pred-horizon');
+  if(horizEl){
+    const dmin = sig.delay_min || sig.delay_days_min || '?';
+    const dmax = sig.delay_max || sig.delay_days_max || '?';
+    horizEl.textContent = `J+${dmin}—J+${dmax}`;
+  }
+  const ampEl = document.getElementById('pred-amp');
+  if(ampEl){
+    const amin = sig.amplitude_min != null ? parseFloat(sig.amplitude_min).toFixed(1) : '?';
+    const amax = sig.amplitude_max != null ? parseFloat(sig.amplitude_max).toFixed(1) : '?';
+    ampEl.textContent = `+${amin}—+${amax}%`;
+  }
+
+  // Graphique Yahoo Finance SVG
+  if(_chartRefreshTimer) clearInterval(_chartRefreshTimer);
+  _loadPredChart(sig.symbol, sig.direction);
+  _chartRefreshTimer = setInterval(() => _loadPredChart(sig.symbol, sig.direction), 15*60*1000);
 
   // Q1 : Causes
   const comps = (sig.components || []).filter(c => c.force > 0.3).slice(0, 4);
@@ -3814,13 +3952,9 @@ function _renderPredDetail(sig){
 <!-- ══ TICKER BAR ══ -->
 <div id="tickerbar" style="position:fixed;bottom:0;left:0;right:0;height:20px;
      background:#000;border-top:1px solid #1a1a1a;display:flex;align-items:center;
-     padding:0 12px;gap:20px;z-index:8000;flex-shrink:0">
-  <span style="color:#445566;font-size:9px">MKT</span>
-  <span id="tk-brent" style="font-size:9px;color:#d4dce8">BRENT —</span>
-  <span id="tk-or"    style="font-size:9px;color:#d4dce8">OR —</span>
-  <span id="tk-sp500" style="font-size:9px;color:#d4dce8">SP500 —</span>
-  <span id="tk-btc"   style="font-size:9px;color:#d4dce8">BTC —</span>
-  <span id="tk-vix"   style="font-size:9px;color:#d4dce8">VIX —</span>
+     padding:0 12px;z-index:8000;flex-shrink:0;overflow:hidden">
+  <span style="color:#445566;font-size:9px;margin-right:8px">MKT</span>
+  <span style="font-size:9px;color:#445566">Chargement...</span>
 </div>
 
 </body>
