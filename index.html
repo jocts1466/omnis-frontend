@@ -3502,39 +3502,60 @@ async function _loadPredChart(omnisSym, direction){
 
 let _chartRefreshTimer = null;
 
-// ══ TICKER BAR — top movers par |variation_1j| ══
+// ══ TICKER BAR — vrais prix via /api/polygon, triés par |var_1j| ══
 async function updateTicker(){
+  const bar = document.getElementById('tickerbar');
+  if(!bar) return;
+  let items = [];
   try{
-    const tok = localStorage.getItem('omnis_token');
-    const tokParam = tok ? '&token=' + encodeURIComponent(tok) : '';
-    const r = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokParam);
-    const d = await r.json();
-    const sigs = (d.signals || [])
-      .filter(s => s.direction !== 'NEUTRE')
-      .map(s => ({
-        ...s,
-        // Utiliser momentum_1j si dispo, sinon probability comme proxy de mouvement
-        _mov: Math.abs(s.momentum_1j || s.price_change || s.probability || 0),
+    // Source 1 : prix réels Polygon
+    const rp = await fetch(API_BASE + '/api/polygon', {signal: AbortSignal.timeout(8000)});
+    if(rp.ok){
+      const dp = await rp.json();
+      const assets = dp.assets || {};
+      items = Object.entries(assets).map(([sym, a]) => ({
+        sym,
+        price:  a.close,
+        var1j:  a.var_1j ?? a.momentum_1d ?? null,
       }))
-      .sort((a,b) => b._mov - a._mov)
+      .filter(x => x.var1j !== null)
+      .sort((a,b) => Math.abs(b.var1j) - Math.abs(a.var1j))
       .slice(0, 8);
-
-    const bar = document.getElementById('tickerbar');
-    if(!bar) return;
-    let html = '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px;flex-shrink:0">MKT</span>';
-    sigs.forEach(s => {
-      const isUp  = s.direction === 'HAUSSIER';
-      const dir   = isUp ? '▲' : '▼';
-      const col   = isUp ? '#3aaa6a' : '#cc4444';
-      const mov   = s.momentum_1j != null
-        ? `${s.momentum_1j >= 0 ? '+' : ''}${parseFloat(s.momentum_1j).toFixed(2)}%`
-        : `${s.probability}%`;
-      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">`
-            + `${s.symbol} ${dir}${mov}</span>`;
-    });
-    if(!sigs.length) html += '<span style="font-size:9px;color:#333">--</span>';
-    bar.innerHTML = html;
+    }
   } catch(e){}
+
+  // Fallback : signaux OMNIS si Polygon indisponible
+  if(!items.length){
+    try{
+      const tok = localStorage.getItem('omnis_token');
+      const tokP = tok ? '&token=' + encodeURIComponent(tok) : '';
+      const rs = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokP, {signal: AbortSignal.timeout(6000)});
+      if(rs.ok){
+        const ds = await rs.json();
+        items = (ds.signals || [])
+          .filter(s => s.direction !== 'NEUTRE')
+          .map(s => ({sym: s.symbol, price: null, var1j: null, dir: s.direction}))
+          .slice(0, 8);
+      }
+    } catch(e){}
+  }
+
+  let html = '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px;flex-shrink:0">MKT</span>';
+  items.forEach(x => {
+    if(x.var1j !== null){
+      const isUp = x.var1j >= 0;
+      const col  = isUp ? '#3aaa6a' : '#cc4444';
+      const dir  = isUp ? '▲' : '▼';
+      const pStr = x.price != null ? ' $' + parseFloat(x.price).toFixed(x.price > 100 ? 2 : 4) : '';
+      const vStr = `${isUp ? '+' : ''}${x.var1j.toFixed(2)}%`;
+      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">${x.sym}${pStr} ${dir}${vStr}</span>`;
+    } else {
+      const col = x.dir === 'HAUSSIER' ? '#3aaa6a' : '#cc4444';
+      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">${x.sym} —</span>`;
+    }
+  });
+  if(!items.length) html += '<span style="font-size:9px;color:#333">--</span>';
+  bar.innerHTML = html;
 }
 updateTicker();
 setInterval(updateTicker, 5*60*1000);
@@ -3677,43 +3698,70 @@ function _renderPredDetail(sig){
   _loadPredChart(sig.symbol, sig.direction);
   _chartRefreshTimer = setInterval(() => _loadPredChart(sig.symbol, sig.direction), 15*60*1000);
 
-  // Q1 : Causes
-  const comps = (sig.components || []).filter(c => c.force > 0.3).slice(0, 4);
+  // Q1 : Causes — lire top_causes du signal (pré-calculé par le moteur)
   const causesEl = document.getElementById('pred-causes');
   if(causesEl){
-    if(comps.length === 0){
-      causesEl.textContent = 'Aucune cause identifiee';
+    // Priorité : top_causes (triés par force), sinon components
+    const topCauses = (sig.top_causes || []).filter(c => c && (c.explanation_fr || c.rule_id));
+    const comps = topCauses.length > 0
+      ? topCauses.slice(0, 4)
+      : (sig.components || []).filter(c => c.force > 0.3).slice(0, 4);
+
+    if(!comps.length){
+      // Si vide, tenter /api/signal/{symbol}
+      fetch(API_BASE + '/api/signal/' + sig.symbol + (localStorage.getItem('omnis_token')
+        ? '?token=' + encodeURIComponent(localStorage.getItem('omnis_token')) : ''))
+        .then(r => r.json()).then(d => {
+          const cs = (d.top_causes || d.components || []).slice(0,4);
+          if(cs.length && causesEl) causesEl.innerHTML = _renderCauses(cs);
+        }).catch(()=>{});
+      causesEl.textContent = 'Chargement...';
     } else {
-      causesEl.innerHTML = comps.map(c => {
-        const fLabel = c.force > 0.7 ? 'FORT' : c.force > 0.4 ? 'MOD' : 'FAIBLE';
-        const fCol   = c.force > 0.7 ? '#3aaa6a' : c.force > 0.4 ? '#c8860a' : '#445566';
-        const txt = (c.explanation_fr || c.rule_id || '').slice(0, 60);
-        return `<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #0f0f0f">
-          <span style="color:${fCol};font-size:8px">[${fLabel}]</span>
-          <span style="color:#d4dce8;font-size:9px;margin-left:4px">${c.rule_id||''}</span><br>
-          <span style="color:#8a9ab0;font-size:9px">${txt}</span>
-        </div>`;
-      }).join('');
+      causesEl.innerHTML = _renderCauses(comps);
     }
   }
 
-  // Q2 : Macro
+  function _renderCauses(cs){
+    return cs.map(c => {
+      const force = parseFloat(c.force || 0);
+      const fLabel = force > 0.6 ? 'FORT' : force > 0.4 ? 'MOD' : 'FAIBLE';
+      const fCol   = force > 0.6 ? '#3aaa6a' : force > 0.4 ? '#c8860a' : '#445566';
+      const ruleId = c.rule_id || c.type || '';
+      const txt    = (c.explanation_fr || '').slice(0, 70);
+      return `<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #0f0f0f">
+        <span style="color:${fCol};font-size:8px;letter-spacing:1px">[${fLabel}]</span>
+        <span style="color:#d4dce8;font-size:8px;margin-left:4px">${ruleId}</span><br>
+        <span style="color:#8a9ab0;font-size:9px">${txt}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Q2 : Macro — charger depuis /api/fred
   const macroEl = document.getElementById('pred-macro');
   if(macroEl){
-    const fd = (typeof _fred_data !== 'undefined' && _fred_data) || {};
-    const macroRows = [
-      ['FEDFUNDS', fd.FEDFUNDS],
-      ['T10Y2Y',   fd.T10Y2Y],
-      ['VIXCLS',   fd.VIXCLS],
-      ['DTWEXBGS', fd.DTWEXBGS],
-    ].filter(([,v]) => v).map(([k,v]) => {
-      const val = (v.latest !== undefined ? v.latest : (v.value || '—'));
-      return `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0f0f">
-        <span style="color:#445566">${k}</span>
-        <span style="color:#d4dce8">${typeof val === 'number' ? val.toFixed(2) : val}</span>
-      </div>`;
-    });
-    macroEl.innerHTML = macroRows.length ? macroRows.join('') : '<span style="color:#445566">Donnees macro non disponibles</span>';
+    macroEl.textContent = 'Chargement...';
+    fetch(API_BASE + '/api/fred', {signal: AbortSignal.timeout(6000)})
+      .then(r => r.ok ? r.json() : null)
+      .then(fd => {
+        if(!fd || !macroEl) return;
+        const series = fd.series || fd;
+        const rows = [
+          ['FED FUNDS', series.FEDFUNDS],
+          ['T10Y-2Y',   series.T10Y2Y],
+          ['VIX',       series.VIXCLS],
+          ['DXY (5j)',  series.DTWEXBGS],
+          ['F&G',       {latest: (_fear_greed_cache?.data?.score ?? null)}],
+        ].filter(([,v]) => v && v.latest != null).map(([k,v]) => {
+          const val = v.latest;
+          const d5  = v.delta_5d ?? v.delta_1m ?? null;
+          const dStr= d5 != null ? ` <span style="color:${d5>=0?'#3aaa6a':'#cc4444'}">${d5>=0?'+':''}${parseFloat(d5).toFixed(2)}</span>` : '';
+          return `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0f0f">
+            <span style="color:#445566">${k}</span>
+            <span style="color:#d4dce8">${typeof val==='number'?val.toFixed(2):val}${dStr}</span>
+          </div>`;
+        });
+        if(macroEl) macroEl.innerHTML = rows.length ? rows.join('') : '<span style="color:#333">—</span>';
+      }).catch(() => { if(macroEl) macroEl.textContent = '—'; });
   }
 
   // Q3 : Correles
