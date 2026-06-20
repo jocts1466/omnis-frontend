@@ -207,7 +207,6 @@ nav{
   <span id="sb-feeds"   style="color:#445566;font-size:9px">FEEDS —</span>
   <span id="sb-vessels" style="color:#445566;font-size:9px">VESSELS —</span>
   <span id="sb-aircraft"style="color:#445566;font-size:9px">AIRCRAFT —</span>
-  <span id="sb-rules"   style="color:#445566;font-size:9px">RULES 113</span>
   <span style="margin-left:auto;color:#c8860a;font-size:9px" id="sb-clock"></span>
 </div>
 <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}</style>
@@ -271,7 +270,7 @@ nav{
       background:none;border:none;color:#555;font-size:18px;cursor:pointer;line-height:1">×</button>
 
     <h3 style="margin:0 0 4px;font-family:var(--mono);font-size:11px;color:#c8860a;letter-spacing:2px">// ALERTS EMAIL</h3>
-    <p style="margin:0 0 20px;font-size:11px;color:#666">Recevez une alerte quand un signal fort est détecté.</p>
+    <p style="margin:0 0 20px;font-size:11px;color:#666">Recevez une alerte quand un événement macro ou géopolitique majeur est détecté.</p>
 
     <div style="margin-bottom:14px">
       <label style="font-family:var(--mono);font-size:7px;color:#555;letter-spacing:1px;display:block;margin-bottom:5px">EMAIL *</label>
@@ -3209,12 +3208,12 @@ async function toggleNewsletter(enabled){
       <span style="font-family:var(--mono);font-size:10px;color:#666">/ mois</span>
     </div>
     <ul style="list-style:none;padding:0;margin:0 0 24px;font-size:12px;color:#ccc;line-height:2.2">
-      <li><span style="color:var(--green)">✓</span> &nbsp;30 actifs complets (pétrole, métaux, crypto, indices…)</li>
-      <li><span style="color:var(--green)">✓</span> &nbsp;Explications causales détaillées</li>
-      <li><span style="color:var(--green)">✓</span> &nbsp;MAP maritime &amp; aérienne temps réel</li>
-      <li><span style="color:var(--green)">✓</span> &nbsp;Alertes email sur signaux forts</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;30 actifs suivis (matières, indices, crypto, FX)</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Géopolitique mondiale temps réel (GDELT + scores de tension)</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Calendrier macro avec surprise factor</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;MAP maritime &amp; aérienne (mouvements, anomalies)</li>
+      <li><span style="color:var(--green)">✓</span> &nbsp;Briefing quotidien IA (état du monde + marchés)</li>
       <li><span style="color:var(--green)">✓</span> &nbsp;Newsletter quotidienne</li>
-      <li><span style="color:var(--green)">✓</span> &nbsp;Historique des prédictions &amp; taux de précision</li>
     </ul>
     <button id="checkout-btn" onclick="closeModal('pricing-modal');startCheckout()"
       style="width:100%;padding:13px;background:#3dd68c;border:none;border-radius:6px;color:#000;
@@ -3390,8 +3389,8 @@ async function toggleNewsletter(enabled){
   <!-- Header -->
   <div style="text-align:center;padding:60px 24px 40px">
     <div style="font-size:36px;color:#c8860a;letter-spacing:8px;font-weight:700;margin-bottom:12px">OMNIS</div>
-    <div style="font-size:12px;color:#8a9ab0;letter-spacing:3px;margin-bottom:8px">INTELLIGENCE FINANCIERE INSTITUTIONNELLE</div>
-    <div style="font-size:9px;color:#445566;letter-spacing:2px">GEOPOLITIQUE // MARCHES // MARITIME // AERIEN</div>
+    <div style="font-size:12px;color:#8a9ab0;letter-spacing:3px;margin-bottom:8px">LE MONDE ET LES MARCHÉS, DANS LE MÊME ÉCRAN</div>
+    <div style="font-size:9px;color:#445566;letter-spacing:2px">GEOPOLITIQUE // MACRO // MARCHES // MARITIME</div>
   </div>
 
   <!-- Stats live -->
@@ -3402,8 +3401,8 @@ async function toggleNewsletter(enabled){
       <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">ACTIFS</div>
     </div>
     <div style="text-align:center">
-      <div style="font-size:18px;color:#c8860a" id="lp-rules">113</div>
-      <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">REGLES CAUSALES</div>
+      <div style="font-size:18px;color:#c8860a" id="lp-zones">16</div>
+      <div style="font-size:8px;color:#445566;letter-spacing:1px;margin-top:2px">ZONES SURVEILLEES</div>
     </div>
     <div style="text-align:center">
       <div style="font-size:18px;color:#c8860a" id="lp-vessels">—</div>
@@ -3424,11 +3423,11 @@ async function toggleNewsletter(enabled){
       <div style="font-size:22px;color:#d4dce8;margin-bottom:20px">0 EUR</div>
       <div style="font-size:9px;color:#8a9ab0;line-height:2.2;margin-bottom:24px">
         <div>• 3 actifs (Or, Bitcoin, S&P 500)</div>
-        <div>• Signaux basiques</div>
+        <div>• Géopolitique mondiale (zones principales)</div>
         <div>• Newsletter hebdomadaire</div>
-        <div style="color:#333">• Explications causales —</div>
-        <div style="color:#333">• MAP maritime / aerien —</div>
-        <div style="color:#333">• Alertes email —</div>
+        <div style="color:#333">• Calendrier macro complet —</div>
+        <div style="color:#333">• MAP maritime / aérien —</div>
+        <div style="color:#333">• Alertes macro & géopol —</div>
       </div>
       <button onclick="openRegisterModal()"
         style="width:100%;padding:10px;background:#0a0a0a;border:1px solid #222;
@@ -3446,12 +3445,12 @@ async function toggleNewsletter(enabled){
       <div style="font-size:22px;color:#c8860a;margin-bottom:4px">5 EUR<span style="font-size:10px;color:#445566"> / mois</span></div>
       <div style="font-size:8px;color:#445566;margin-bottom:20px">Resiliable a tout moment</div>
       <div style="font-size:9px;color:#8a9ab0;line-height:2.2;margin-bottom:24px">
-        <div style="color:#3aaa6a">• 30 actifs complets</div>
-        <div style="color:#3aaa6a">• Explications causales detaillees</div>
-        <div style="color:#3aaa6a">• MAP maritime et aerienne</div>
-        <div style="color:#3aaa6a">• Alertes email temps reel</div>
+        <div style="color:#3aaa6a">• 30 actifs suivis (matières, indices, crypto, FX)</div>
+        <div style="color:#3aaa6a">• Géopolitique mondiale temps réel</div>
+        <div style="color:#3aaa6a">• Calendrier macro avec surprise factor</div>
+        <div style="color:#3aaa6a">• MAP maritime & aérienne</div>
+        <div style="color:#3aaa6a">• Briefing quotidien IA</div>
         <div style="color:#3aaa6a">• Newsletter quotidienne</div>
-        <div style="color:#3aaa6a">• Calendrier économique avec surprise factor</div>
       </div>
       <button onclick="openRegisterModal()"
         style="width:100%;padding:10px;background:#c8860a;border:none;
