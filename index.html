@@ -218,7 +218,6 @@ nav{
     <span style="font-family:var(--mono);font-size:11px;color:#c8860a;letter-spacing:4px;font-weight:700">OMNIS</span>
   </div>
   <button class="nav-tab active" onclick="switchTab('map',this)">MAP</button>
-  <button class="nav-tab" onclick="switchTab('predictions',this)">PRED</button>
   <button class="nav-tab" onclick="switchTab('marches',this)">MKT</button>
   <button class="nav-tab" onclick="switchTab('briefing',this)">BRIEF</button>
   <button class="nav-tab" onclick="switchTab('news',this)">NEWS</button>
@@ -470,94 +469,6 @@ nav{
   </div>
 </div>
 
-<!-- ══ PRÉDICTIONS ══ -->
-<div class="view" id="view-predictions" style="flex-direction:row;background:#000;overflow:hidden">
-
-  <!-- COL GAUCHE : liste actifs -->
-  <div id="pred-left" style="width:180px;flex-shrink:0;background:#000;border-right:1px solid #1a1a1a;
-       display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:8px 10px;border-bottom:1px solid #1a1a1a;font-size:8px;color:#445566;letter-spacing:2px">
-      // ACTIFS
-    </div>
-    <div style="border-bottom:1px solid #1a1a1a">
-      <input id="pred-search" type="text" placeholder="// RECHERCHER"
-        oninput="filterPredAssets(this.value)"
-        style="width:100%;background:#000;border:none;color:#c8860a;
-               font-family:'Courier New',monospace;font-size:9px;
-               padding:6px 10px;outline:none;letter-spacing:1px;box-sizing:border-box">
-    </div>
-    <div id="pred-asset-list" style="flex:1;overflow-y:auto;padding:4px 0"></div>
-  </div>
-
-  <!-- COL CENTRE : détail -->
-  <div id="pred-center" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
-    <!-- PARTIE HAUTE : infos + TradingView (280px) -->
-    <div style="height:280px;flex-shrink:0;display:flex;flex-direction:column;border-bottom:1px solid #1a1a1a">
-      <!-- Bande info signal -->
-      <div id="pred-header" style="padding:7px 14px;background:#050505;border-bottom:1px solid #1a1a1a;
-           display:flex;align-items:center;gap:16px;flex-shrink:0">
-        <div id="pred-sym"  style="font-size:9px;color:#445566;letter-spacing:2px">—</div>
-        <div id="pred-dir"  style="font-size:10px">—</div>
-        <div id="pred-prob" style="font-size:16px;color:#c8860a;font-weight:700">—</div>
-        <div style="display:flex;gap:14px;margin-left:auto;font-size:8px;align-items:center">
-          <span style="color:#445566">HORIZON <span id="pred-horizon" style="color:#8a9ab0">—</span></span>
-          <span style="color:#445566">AMP <span id="pred-amp" style="color:#8a9ab0">—</span></span>
-          <button id="pred-share-btn" onclick="shareCurrentSignal()"
-            style="background:none;border:1px solid #222;color:#445566;font-family:'Courier New',monospace;
-                   font-size:7px;padding:2px 8px;cursor:pointer;letter-spacing:1px;transition:all .15s"
-            onmouseover="this.style.color='#c8860a';this.style.borderColor='#c8860a'"
-            onmouseout="this.style.color='#445566';this.style.borderColor='#222'">
-            // PARTAGER
-          </button>
-        </div>
-      </div>
-      <!-- TradingView widget -->
-      <div id="pred-tv-container" style="flex:1;background:#000;overflow:hidden"></div>
-    </div>
-    <!-- PARTIE BASSE : grille 2x2 -->
-    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
-         gap:1px;background:#1a1a1a;overflow:hidden">
-      <!-- Q1 : CAUSES -->
-      <div style="background:#000;padding:10px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// CAUSES PRINCIPALES</div>
-        <div id="pred-causes" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
-      </div>
-      <!-- Q2 : MACRO -->
-      <div style="background:#000;padding:10px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// DONNEES MACRO</div>
-        <div id="pred-macro" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
-      </div>
-      <!-- Q3 : MARITIME -->
-      <div style="background:#000;padding:10px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// MARITIME // ZONES</div>
-        <div id="pred-maritime" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
-      </div>
-      <!-- Q4 : CORRELES -->
-      <div style="background:#000;padding:10px;overflow-y:auto">
-        <div style="font-size:8px;color:#c8860a;letter-spacing:2px;margin-bottom:8px">// ACTIFS CORRELES</div>
-        <div id="pred-corr" style="font-size:9px;color:#8a9ab0;line-height:1.9">—</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- COL DROITE : events + precision -->
-  <div id="pred-right" style="width:210px;flex-shrink:0;background:#000;border-left:1px solid #1a1a1a;
-       display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:8px 10px;border-bottom:1px solid #1a1a1a;font-size:8px;color:#445566;letter-spacing:2px">
-      // EVENTS // GEO
-    </div>
-    <div id="pred-events" style="flex:1;overflow-y:auto;padding:8px 10px;font-size:9px;color:#8a9ab0;line-height:1.8">—</div>
-    <div style="padding:8px 10px;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;
-         font-size:8px;color:#445566;letter-spacing:2px">// WORLD STATES</div>
-    <div id="pred-wstates" style="height:80px;overflow-y:auto;padding:8px 10px;font-size:9px;color:#8a9ab0;line-height:1.8">—</div>
-    <div style="padding:8px 10px;border-top:1px solid #1a1a1a;font-size:8px;color:#445566;letter-spacing:2px">
-      // PRECISION
-    </div>
-    <div id="pred-accuracy" style="padding:8px 10px;font-size:9px;color:#8a9ab0">—</div>
-  </div>
-
-</div>
-
 <!-- ══ BRIEFING ══ -->
 <div class="view" id="view-briefing" style="flex-direction:column;overflow:hidden;background:var(--bg)">
 
@@ -801,7 +712,7 @@ let EVENTS=[]
 function switchTab(id,btn){
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   // Cacher toutes les vues connues
-  ['map','predictions','marches','briefing','news','calendrier','performance','portfolio'].forEach(v=>{
+  ['map','marches','briefing','news','calendrier','performance','portfolio'].forEach(v=>{
     const el=document.getElementById('view-'+v);
     if(el) el.style.display='none';
   });
@@ -819,7 +730,6 @@ function switchTab(id,btn){
             loadMaritimeData();
     }, 500);
   }
-  if(id==='predictions') loadPredView();
 }
 setInterval(()=>{
   const n=new Date();
@@ -3133,85 +3043,6 @@ const _YAHOO_MAP = {
   CNH:'CNH=X', BRL:'BRL=X', INR:'INR=X', CHARBON:'KOL', NICKEL:'NI=F',
 };
 
-function _drawPredChart(prices, direction, containerId){
-  const container = document.getElementById(containerId);
-  if(!container || !prices || prices.length < 2) return;
-  const W = 800, H = 160, PAD = {t:10, r:55, b:28, l:8};
-  const vals = prices.map(p => p.v);
-  const mn = Math.min(...vals), mx = Math.max(...vals);
-  const rng = mx - mn || 1;
-  const col = direction === 'HAUSSIER' ? '#c8860a' : '#cc4444';
-  const toX = i => PAD.l + (i / (prices.length-1)) * (W - PAD.l - PAD.r);
-  const toY = v => PAD.t + (1 - (v - mn) / rng) * (H - PAD.t - PAD.b);
-
-  const pts  = prices.map((p,i) => `${toX(i).toFixed(1)},${toY(p.v).toFixed(1)}`).join(' ');
-  const poly = `${pts} ${toX(prices.length-1).toFixed(1)},${H-PAD.b} ${toX(0).toFixed(1)},${H-PAD.b}`;
-
-  // Grilles horizontales (4 lignes)
-  const gridLines = [0.25,0.5,0.75].map(r => {
-    const y = (PAD.t + r*(H-PAD.t-PAD.b)).toFixed(1);
-    return `<line x1="${PAD.l}" y1="${y}" x2="${W-PAD.r}" y2="${y}" stroke="#1a1a1a" stroke-width="0.5" stroke-dasharray="3,3"/>`;
-  }).join('');
-
-  // Labels prix à droite
-  const priceLabels = [mn, (mn+mx)/2, mx].map(v => {
-    const y = toY(v).toFixed(1);
-    const lbl = v > 1000 ? v.toFixed(0) : v > 10 ? v.toFixed(2) : v.toFixed(4);
-    return `<text x="${W-PAD.r+4}" y="${y}" fill="#445566" font-size="8" dominant-baseline="middle" font-family="'Courier New',monospace">${lbl}</text>`;
-  }).join('');
-
-  // Ligne prix actuel en pointillés
-  const lastY = toY(vals[vals.length-1]).toFixed(1);
-  const lastVal = vals[vals.length-1];
-  const lastLbl = lastVal > 1000 ? lastVal.toFixed(0) : lastVal > 10 ? lastVal.toFixed(2) : lastVal.toFixed(4);
-
-  // Labels dates (5 points équidistants)
-  const step = Math.floor(prices.length / 5);
-  const dateLabels = [0,1,2,3,4].map(i => {
-    const idx = Math.min(i*step, prices.length-1);
-    const x = toX(idx).toFixed(1);
-    const d = new Date(prices[idx].t);
-    const lbl = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
-    return `<text x="${x}" y="${H-6}" fill="#333" font-size="7" text-anchor="middle" font-family="'Courier New',monospace">${lbl}</text>`;
-  }).join('');
-
-  container.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
-    ${gridLines}
-    <polygon points="${poly}" fill="${col}" fill-opacity="0.05"/>
-    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <line x1="${PAD.l}" y1="${lastY}" x2="${W-PAD.r}" y2="${lastY}" stroke="${col}" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
-    <text x="${W-PAD.r+4}" y="${lastY}" fill="${col}" font-size="8" dominant-baseline="middle" font-weight="bold" font-family="'Courier New',monospace">${lastLbl}</text>
-    ${priceLabels}
-    ${dateLabels}
-  </svg>`;
-}
-
-async function _loadPredChart(omnisSym, direction){
-  const container = document.getElementById('pred-tv-container');
-  if(!container) return;
-  container.innerHTML = '<div style="color:#445566;font-size:9px;padding:8px;font-family:\'Courier New\'">Chargement...</div>';
-  const yTicker = _YAHOO_MAP[omnisSym] || omnisSym;
-  const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yTicker)}?interval=4h&range=10d`;
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-  try{
-    const resp = await fetch(proxy, {signal: AbortSignal.timeout(12000)});
-    const raw  = await resp.json();
-    const json = JSON.parse(raw.contents);
-    const res  = json.chart.result[0];
-    const timestamps = res.timestamp;
-    const closes     = res.indicators.quote[0].close;
-    const prices = timestamps
-      .map((t,i) => ({t: t*1000, v: closes[i]}))
-      .filter(p => p.v !== null && !isNaN(p.v));
-    if(prices.length < 2) throw new Error('Pas assez de données');
-    _drawPredChart(prices, direction, 'pred-tv-container');
-  } catch(e){
-    if(container) container.innerHTML = `<div style="color:#333;font-size:9px;padding:8px;font-family:'Courier New'">${omnisSym} — données indisponibles</div>`;
-  }
-}
-
-let _chartRefreshTimer = null;
-
 // ══ TICKER BAR — vrais prix via /api/polygon, triés par |var_1j| ══
 async function updateTicker(){
   const bar = document.getElementById('tickerbar');
@@ -3305,69 +3136,6 @@ setInterval(async ()=>{
   } catch(e){}
 }, 15*60*1000);
 
-/* ── AMÉLIORATION 6 : Partage signal ── */
-let _currentPredSig = null;
-function shareCurrentSignal(){
-  if(!_currentPredSig) return;
-  const s = _currentPredSig;
-  const url = `https://omnis.finance/?sym=${s.symbol}&dir=${s.direction}&prob=${s.probability}&date=${new Date().toISOString().slice(0,10)}`;
-  navigator.clipboard.writeText(url).then(()=>{
-    const btn = document.getElementById('pred-share-btn');
-    if(btn){ const orig=btn.textContent; btn.textContent='// COPIE'; setTimeout(()=>btn.textContent=orig,2000); }
-  }).catch(()=>{ prompt('Lien de partage :', url); });
-}
-
-/* ── AMÉLIORATION 7 : Filtre actifs PRED ── */
-function filterPredAssets(query){
-  const q = query.trim().toUpperCase();
-  document.querySelectorAll('.pred-asset-row').forEach(row=>{
-    const sym = (row.dataset.sym||'').toUpperCase();
-    row.style.display = (!q || sym.includes(q)) ? '' : 'none';
-  });
-}
-
-/* ── Charger historique précision dans colonne droite PRED ── */
-async function _loadPredAccuracy(symbol){
-  const el = document.getElementById('pred-accuracy');
-  if(!el) return;
-  try{
-    const r = await fetch(API_BASE+'/api/signals/history?symbol='+symbol+'&limit=10');
-    if(!r.ok) return;
-    const rows = await r.json();
-    const verified = rows.filter(r=>r.correct!==null);
-    if(!verified.length){ el.innerHTML='<div style="color:#333">Historique insuffisant</div>'; return; }
-    const pct = Math.round(verified.filter(r=>r.correct).length/verified.length*100);
-    const col = pct>=60?'#3aaa6a':pct>=40?'#c8860a':'#cc4444';
-    el.innerHTML = `<div style="color:${col};font-size:11px;font-weight:700;margin-bottom:6px">${pct}% CORRECT</div>`
-      + `<div style="color:#445566;font-size:8px;margin-bottom:8px">${verified.length} signaux verifies</div>`
-      + verified.slice(0,5).map(r=>{
-          const c=r.correct?'#3aaa6a':'#cc4444';
-          const chg=r.actual_change_pct!=null?`${r.actual_change_pct>=0?'+':''}${r.actual_change_pct?.toFixed(1)}%`:'?';
-          return `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0f0f;font-size:8px">`
-            +`<span style="color:#445566">${(r.signal_date||'').slice(5,10)}</span>`
-            +`<span style="color:${c}">${r.correct?'OK':'NON'} ${chg}</span></div>`;
-        }).join('');
-  } catch(e){ el.innerHTML='<div style="color:#333">—</div>'; }
-}
-
-/* ── Mise à jour graphique via /api/chart (CORS-free) ── */
-async function _loadPredChartServer(symbol, direction){
-  const container = document.getElementById('pred-tv-container');
-  if(!container) return;
-  container.innerHTML='<div style="color:#445566;font-size:9px;padding:8px;font-family:\'Courier New\'">Chargement...</div>';
-  try{
-    const r = await fetch(API_BASE+'/api/chart/'+symbol, {signal:AbortSignal.timeout(15000)});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const d = await r.json();
-    if(d.prices && d.prices.length >= 2){
-      _drawPredChart(d.prices, direction, 'pred-tv-container');
-      return;
-    }
-  } catch(e){}
-  // Fallback : proxy allorigins
-  _loadPredChart(symbol, direction);
-}
-
 // ══ CANCEL SUBSCRIPTION ══
 async function confirmCancel(){
   if(!confirm('Confirmer la resiliation de votre abonnement Premium ?')) return;
@@ -3423,214 +3191,6 @@ async function toggleNewsletter(enabled){
   } catch(e){}
 }
 
-/* ── PRED VIEW ── */
-let _predSignals = [];
-let _predSelected = null;
-
-async function loadPredView(){
-  const tok = localStorage.getItem('omnis_token');
-  const tokParam = tok ? '&token=' + encodeURIComponent(tok) : '';
-  try{
-    const r = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokParam);
-    const d = await r.json();
-    _predSignals = d.signals || [];
-    _renderPredList();
-    if(_predSignals.length > 0){
-      _selectPredAsset(_predSignals[0].symbol);
-    }
-  } catch(e){ console.warn('[PRED]', e); }
-}
-
-function _renderPredList(){
-  const el = document.getElementById('pred-asset-list');
-  if(!el) return;
-  el.innerHTML = _predSignals.map(s => {
-    const dirSym = s.direction === 'HAUSSIER' ? '▲' : s.direction === 'BAISSIER' ? '▼' : '-';
-    const col    = s.direction === 'HAUSSIER' ? '#3aaa6a' : s.direction === 'BAISSIER' ? '#cc4444' : '#445566';
-    const prob   = s.probability || 0;
-    const barW   = Math.min(prob, 100);
-    return `<div class="pred-asset-row" data-sym="${s.symbol}"
-      onclick="_selectPredAsset('${s.symbol}')"
-      style="padding:5px 10px;cursor:pointer;border-bottom:1px solid #0f0f0f;display:flex;
-             align-items:center;gap:6px;transition:background .1s">
-      <span style="font-size:9px;color:#d4dce8;width:52px;letter-spacing:1px">${s.symbol}</span>
-      <span style="font-size:10px;color:${col};width:10px">${dirSym}</span>
-      <div style="flex:1;height:2px;background:#1a1a1a;border-radius:1px">
-        <div style="width:${barW}%;height:2px;background:${col}"></div>
-      </div>
-      <span style="font-size:9px;color:${col};width:30px;text-align:right">${prob}%</span>
-    </div>`;
-  }).join('');
-}
-
-function _selectPredAsset(sym){
-  _predSelected = sym;
-  // Highlight
-  document.querySelectorAll('.pred-asset-row').forEach(r => {
-    r.style.background = r.dataset.sym === sym ? '#141414' : 'transparent';
-    const label = r.querySelector('span');
-    if(label) label.style.color = r.dataset.sym === sym ? '#c8860a' : '#d4dce8';
-  });
-  const sig = _predSignals.find(s => s.symbol === sym);
-  if(!sig) return;
-  _currentPredSig = sig;   // pour shareCurrentSignal()
-  _renderPredDetail(sig);
-  _loadPredAccuracy(sym);  // historique précision
-}
-
-
-function _renderPredDetail(sig){
-  const dirSym = sig.direction === 'HAUSSIER' ? '▲ HAUSSIER' : sig.direction === 'BAISSIER' ? '▼ BAISSIER' : '- NEUTRE';
-  const dirCol = sig.direction === 'HAUSSIER' ? '#3aaa6a' : sig.direction === 'BAISSIER' ? '#cc4444' : '#445566';
-  const prob   = sig.probability || 0;
-
-  // Bande info
-  const symEl = document.getElementById('pred-sym');
-  if(symEl) symEl.textContent = sig.symbol + ' // ' + (sig.name_fr || sig.symbol).toUpperCase();
-  const dirEl = document.getElementById('pred-dir');
-  if(dirEl) dirEl.innerHTML = `<span style="color:${dirCol}">${dirSym}</span>`;
-  const probEl = document.getElementById('pred-prob');
-  if(probEl) probEl.textContent = prob + '%';
-  const horizEl = document.getElementById('pred-horizon');
-  if(horizEl){
-    const dmin = sig.delay_min || sig.delay_days_min || '?';
-    const dmax = sig.delay_max || sig.delay_days_max || '?';
-    horizEl.textContent = `J+${dmin}—J+${dmax}`;
-  }
-  const ampEl = document.getElementById('pred-amp');
-  if(ampEl){
-    const amin = sig.amplitude_min != null ? parseFloat(sig.amplitude_min).toFixed(1) : '?';
-    const amax = sig.amplitude_max != null ? parseFloat(sig.amplitude_max).toFixed(1) : '?';
-    ampEl.textContent = `+${amin}—+${amax}%`;
-  }
-
-  // Graphique Yahoo Finance SVG
-  if(_chartRefreshTimer) clearInterval(_chartRefreshTimer);
-  _loadPredChartServer(sig.symbol, sig.direction);
-  _chartRefreshTimer = setInterval(() => _loadPredChartServer(sig.symbol, sig.direction), 15*60*1000);
-
-  // Q1 : Causes — lire top_causes du signal (pré-calculé par le moteur)
-  const causesEl = document.getElementById('pred-causes');
-  if(causesEl){
-    // Priorité : top_causes (triés par force), sinon components
-    const topCauses = (sig.top_causes || []).filter(c => c && (c.explanation_fr || c.rule_id));
-    const comps = topCauses.length > 0
-      ? topCauses.slice(0, 4)
-      : (sig.components || []).filter(c => c.force > 0.3).slice(0, 4);
-
-    if(!comps.length){
-      // Si vide, tenter /api/signal/{symbol}
-      fetch(API_BASE + '/api/signal/' + sig.symbol + (localStorage.getItem('omnis_token')
-        ? '?token=' + encodeURIComponent(localStorage.getItem('omnis_token')) : ''))
-        .then(r => r.json()).then(d => {
-          const cs = (d.top_causes || d.components || []).slice(0,4);
-          if(cs.length && causesEl) causesEl.innerHTML = _renderCauses(cs);
-        }).catch(()=>{});
-      causesEl.textContent = 'Chargement...';
-    } else {
-      causesEl.innerHTML = _renderCauses(comps);
-    }
-  }
-
-  function _renderCauses(cs){
-    return cs.map(c => {
-      const force = parseFloat(c.force || 0);
-      const fLabel = force > 0.6 ? 'FORT' : force > 0.4 ? 'MOD' : 'FAIBLE';
-      const fCol   = force > 0.6 ? '#3aaa6a' : force > 0.4 ? '#c8860a' : '#445566';
-      const ruleId = c.rule_id || c.type || '';
-      const txt    = (c.explanation_fr || '').slice(0, 70);
-      return `<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #0f0f0f">
-        <span style="color:${fCol};font-size:8px;letter-spacing:1px">[${fLabel}]</span>
-        <span style="color:#d4dce8;font-size:8px;margin-left:4px">${ruleId}</span><br>
-        <span style="color:#8a9ab0;font-size:9px">${txt}</span>
-      </div>`;
-    }).join('');
-  }
-
-  // Q2 : Macro — charger depuis /api/fred
-  const macroEl = document.getElementById('pred-macro');
-  if(macroEl){
-    macroEl.textContent = 'Chargement...';
-    fetch(API_BASE + '/api/fred', {signal: AbortSignal.timeout(6000)})
-      .then(r => r.ok ? r.json() : null)
-      .then(fd => {
-        if(!fd || !macroEl) return;
-        const series = fd.series || fd;
-        const rows = [
-          ['FED FUNDS', series.FEDFUNDS],
-          ['T10Y-2Y',   series.T10Y2Y],
-          ['VIX',       series.VIXCLS],
-          ['DXY (5j)',  series.DTWEXBGS],
-          ['F&G',       {latest: (_fear_greed_cache?.data?.score ?? null)}],
-        ].filter(([,v]) => v && v.latest != null).map(([k,v]) => {
-          const val = v.latest;
-          const d5  = v.delta_5d ?? v.delta_1m ?? null;
-          const dStr= d5 != null ? ` <span style="color:${d5>=0?'#3aaa6a':'#cc4444'}">${d5>=0?'+':''}${parseFloat(d5).toFixed(2)}</span>` : '';
-          return `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0f0f">
-            <span style="color:#445566">${k}</span>
-            <span style="color:#d4dce8">${typeof val==='number'?val.toFixed(2):val}${dStr}</span>
-          </div>`;
-        });
-        if(macroEl) macroEl.innerHTML = rows.length ? rows.join('') : '<span style="color:#333">—</span>';
-      }).catch(() => { if(macroEl) macroEl.textContent = '—'; });
-  }
-
-  // Q3 : Correles
-  const corrEl = document.getElementById('pred-corr');
-  if(corrEl){
-    const related = _predSignals.filter(s => s.symbol !== sig.symbol).slice(0, 5);
-    corrEl.innerHTML = related.map(s => {
-      const d = s.direction === 'HAUSSIER' ? '▲' : s.direction === 'BAISSIER' ? '▼' : '-';
-      const c = s.direction === 'HAUSSIER' ? '#3aaa6a' : s.direction === 'BAISSIER' ? '#cc4444' : '#445566';
-      return `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0f0f">
-        <span style="color:#8a9ab0">${s.symbol}</span>
-        <span style="color:${c}">${d} ${s.probability||0}%</span>
-      </div>`;
-    }).join('') || '<span style="color:#445566">—</span>';
-  }
-
-  // Q4 : Maritime
-  const marEl = document.getElementById('pred-maritime');
-  if(marEl){
-    const mData = (typeof maritimeData !== 'undefined' && maritimeData && maritimeData.zones) || {};
-    const relevantZones = Object.entries(mData).filter(([,z]) => z.anomaly_score > 0.2).slice(0,3);
-    marEl.innerHTML = relevantZones.length
-      ? relevantZones.map(([zid,z]) => `<div style="padding:2px 0;border-bottom:1px solid #0f0f0f">
-          <span style="color:#445566">${zid}</span>
-          <span style="color:#c8860a;margin-left:6px">${z.name||zid}</span><br>
-          <span style="color:#8a9ab0;font-size:9px">score=${(z.anomaly_score*100).toFixed(0)}% vessels=${z.total||0}</span>
-        </div>`).join('')
-      : '<span style="color:#445566">Aucune anomalie</span>';
-  }
-
-  // Right — Events from causal
-  const evEl = document.getElementById('pred-events');
-  if(evEl && typeof causalEvents !== 'undefined' && causalEvents.length){
-    evEl.innerHTML = causalEvents.slice(0,6).map(e => {
-      const txt = (e.evenement || e.description || '').slice(0,55);
-      return `<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #0f0f0f">
-        <span style="color:#c8860a;font-size:8px">${e.id||'?'}</span><br>
-        <span style="color:#8a9ab0">${txt}</span>
-      </div>`;
-    }).join('');
-  } else if(evEl){ evEl.textContent = 'Aucun evenement detecte'; }
-
-  // Right — World States
-  const wsEl = document.getElementById('pred-wstates');
-  if(wsEl && typeof worldStatesData !== 'undefined' && worldStatesData.length){
-    wsEl.innerHTML = worldStatesData.slice(0,3).map(w =>
-      `<div style="padding:2px 0;border-bottom:1px solid #0f0f0f;color:#8a9ab0">
-        <span style="color:#c8860a">${w.state_id||''}</span> ${(w.description||'').slice(0,40)}
-      </div>`).join('');
-  } else if(wsEl){ wsEl.textContent = '—'; }
-
-  // Right — Accuracy (stub)
-  const accEl = document.getElementById('pred-accuracy');
-  if(accEl){
-    accEl.innerHTML = `<div style="color:#3aaa6a">Precision: N/A</div>
-      <div style="color:#445566;font-size:8px;margin-top:4px">Historique insuffisant</div>`;
-  }
-}
 </script>
 
 </div>
