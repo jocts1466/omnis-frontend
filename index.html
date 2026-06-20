@@ -2916,69 +2916,6 @@ const _YAHOO_MAP = {
   CNH:'CNH=X', BRL:'BRL=X', INR:'INR=X', CHARBON:'KOL', NICKEL:'NI=F',
 };
 
-// ══ TICKER BAR — vrais prix via /api/polygon, triés par |var_1j| ══
-async function updateTicker(){
-  const bar = document.getElementById('tickerbar');
-  if(!bar) return;
-  let items = [];
-  try{
-    // Source 1 : prix réels Polygon
-    const rp = await fetch(API_BASE + '/api/polygon', {signal: AbortSignal.timeout(8000)});
-    if(rp.ok){
-      const dp = await rp.json();
-      const assets = dp.assets || {};
-      items = Object.entries(assets).map(([sym, a]) => ({
-        sym,
-        price:  a.close,
-        var1j:  a.var_1j ?? a.momentum_1d ?? null,
-      }))
-      .filter(x => x.var1j !== null)
-      .sort((a,b) => Math.abs(b.var1j) - Math.abs(a.var1j))
-      .slice(0, 8);
-    }
-  } catch(e){}
-
-  // Fallback : signaux OMNIS si Polygon indisponible
-  if(!items.length){
-    try{
-      const tok = localStorage.getItem('omnis_token');
-      const tokP = tok ? '&token=' + encodeURIComponent(tok) : '';
-      const rs = await fetch(API_BASE + '/api/signal/all?lang=fr' + tokP, {signal: AbortSignal.timeout(6000)});
-      if(rs.ok){
-        const ds = await rs.json();
-        items = (ds.signals || [])
-          .filter(s => s.direction !== 'NEUTRE')
-          .map(s => ({sym: s.symbol, price: null, var1j: null, dir: s.direction}))
-          .slice(0, 8);
-      }
-    } catch(e){}
-  }
-
-  let html = '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px;flex-shrink:0">MKT</span>';
-  items.forEach(x => {
-    if(x.var1j !== null){
-      const isUp = x.var1j >= 0;
-      const col  = isUp ? '#3aaa6a' : '#cc4444';
-      const dir  = isUp ? '▲' : '▼';
-      const pStr = x.price != null ? ' $' + parseFloat(x.price).toFixed(x.price > 100 ? 2 : 4) : '';
-      const vStr = `${isUp ? '+' : ''}${x.var1j.toFixed(2)}%`;
-      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">${x.sym}${pStr} ${dir}${vStr}</span>`;
-    } else {
-      const col = x.dir === 'HAUSSIER' ? '#3aaa6a' : '#cc4444';
-      html += `<span style="font-size:9px;color:${col};margin-right:18px;white-space:nowrap">${x.sym} —</span>`;
-    }
-  });
-  if(!items.length) html += '<span style="font-size:9px;color:#333">--</span>';
-  bar.innerHTML = html;
-}
-// Ticker : chargement différé 3s pour ne pas bloquer le rendu initial
-const _tickerBar = document.getElementById('tickerbar');
-if(_tickerBar) _tickerBar.innerHTML =
-  '<span style="color:#445566;font-size:9px;letter-spacing:1px;margin-right:10px">MKT</span>'
-  + '<span style="font-size:9px;color:#333;letter-spacing:1px">-- chargement prix --</span>';
-setTimeout(updateTicker, 3000);
-setInterval(updateTicker, 5*60*1000);
-
 // ══ CANCEL SUBSCRIPTION ══
 async function confirmCancel(){
   if(!confirm('Confirmer la resiliation de votre abonnement Premium ?')) return;
@@ -3216,14 +3153,6 @@ async function toggleNewsletter(enabled){
       <button onclick="doLogout()" style="padding:6px 14px;background:transparent;border:1px solid #cc444444;border-radius:2px;color:#cc4444;font-family:var(--mono);font-size:8px;cursor:pointer;letter-spacing:1px">SE DECONNECTER</button>
     </div>
   </div>
-</div>
-
-<!-- ══ TICKER BAR ══ -->
-<div id="tickerbar" style="position:fixed;bottom:0;left:0;right:0;height:20px;
-     background:#000;border-top:1px solid #1a1a1a;display:flex;align-items:center;
-     padding:0 12px;z-index:8000;flex-shrink:0;overflow:hidden">
-  <span style="color:#445566;font-size:9px;margin-right:8px">MKT</span>
-  <span style="font-size:9px;color:#445566">Chargement...</span>
 </div>
 
 <!-- ══ LANDING PAGE ══ -->
