@@ -2986,36 +2986,6 @@ if(_tickerBar) _tickerBar.innerHTML =
 setTimeout(updateTicker, 3000);
 setInterval(updateTicker, 5*60*1000);
 
-/* ── AMÉLIORATION 3 : Push Notifications navigateur ── */
-function requestPushPermission(){
-  if('Notification' in window && Notification.permission === 'default'){
-    Notification.requestPermission();
-  }
-}
-function sendPushNotification(signal){
-  if(!('Notification' in window) || Notification.permission !== 'granted') return;
-  new Notification('OMNIS — Signal fort', {
-    body: `${signal.symbol} ${signal.direction} ${signal.probability}%`,
-    icon: '/favicon.ico',
-    tag:  signal.symbol,
-  });
-}
-// Vérification alertes toutes les 15 min (push + email)
-setInterval(async ()=>{
-  const tok = localStorage.getItem('omnis_token');
-  if(!tok || !_currentUser) return;
-  try{
-    const r = await fetch(API_BASE+'/api/signal/all?token='+encodeURIComponent(tok));
-    const d = await r.json();
-    const minProb = 80;
-    (d.signals||[]).forEach(s=>{
-      if(s.probability >= minProb && s.direction !== 'NEUTRE'){
-        sendPushNotification(s);
-      }
-    });
-  } catch(e){}
-}, 15*60*1000);
-
 // ══ CANCEL SUBSCRIPTION ══
 async function confirmCancel(){
   if(!confirm('Confirmer la resiliation de votre abonnement Premium ?')) return;
